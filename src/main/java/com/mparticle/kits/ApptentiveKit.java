@@ -1,9 +1,7 @@
 package com.mparticle.kits;
 
-import android.app.Activity;
+import android.app.Application;
 import android.content.Context;
-import android.os.Bundle;
-import android.text.TextUtils;
 
 import com.apptentive.android.sdk.Apptentive;
 import com.apptentive.android.sdk.ApptentiveInternal;
@@ -24,7 +22,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-public class ApptentiveKit extends KitIntegration implements KitIntegration.EventListener, KitIntegration.CommerceListener, KitIntegration.AttributeListener, KitIntegration.ActivityListener {
+public class ApptentiveKit extends KitIntegration implements KitIntegration.EventListener, KitIntegration.CommerceListener, KitIntegration.AttributeListener {
 	private static final String API_KEY = "appKey";
 	private ApptentiveActivityLifecycleCallbacks callbacks;
 
@@ -42,10 +40,7 @@ public class ApptentiveKit extends KitIntegration implements KitIntegration.Even
 		if (callbacks == null) {
 			callbacks = new ApptentiveActivityLifecycleCallbacks();
 		}
-		/* Note mParticle will delegate lifecycle management to the above callbacks. No need to
-		 * register ApptentiveActivityLifecycleCallbacks through Apptentive. But do need to initialize Apptentive
-         *
-         */
+		((Application)context.getApplicationContext()).registerActivityLifecycleCallbacks(callbacks);
 		ApptentiveInternal.createInstance(context.getApplicationContext(), apiKey);
 		return null;
 	}
@@ -246,56 +241,6 @@ public class ApptentiveKit extends KitIntegration implements KitIntegration.Even
 			}
 
 		}
-		return null;
-	}
-
-	@Override
-	public List<ReportingMessage> onActivityCreated(Activity activity, Bundle savedInstanceState) {
-		if (callbacks != null) {
-			callbacks.onActivityCreated(activity, null);
-		}
-		return null;
-	}
-
-	@Override
-	public List<ReportingMessage> onActivityResumed(Activity activity) {
-		if (callbacks != null) {
-			callbacks.onActivityResumed(activity);
-		}
-		return null;
-	}
-
-	@Override
-	public List<ReportingMessage> onActivityPaused(Activity activity) {
-		if (callbacks != null) {
-			callbacks.onActivityPaused(activity);
-		}
-		return null;
-	}
-
-	@Override
-	public List<ReportingMessage> onActivityStopped(Activity activity) {
-		if (callbacks != null) {
-			callbacks.onActivityStopped(activity);
-		}
-		return null;
-	}
-
-	@Override
-	public List<ReportingMessage> onActivitySaveInstanceState(Activity activity, Bundle outState) {
-		return null;
-	}
-
-	@Override
-	public List<ReportingMessage> onActivityStarted(Activity activity) {
-		if (callbacks != null) {
-			callbacks.onActivityStarted(activity);
-		}
-		return null;
-	}
-
-	@Override
-	public List<ReportingMessage> onActivityDestroyed(Activity activity) {
 		return null;
 	}
 }
