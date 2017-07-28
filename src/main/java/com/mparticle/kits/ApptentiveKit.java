@@ -35,13 +35,13 @@ public class ApptentiveKit extends KitIntegration implements KitIntegration.Even
 	protected List<ReportingMessage> onKitCreate(Map<String, String> settings, Context context) {
 		String apiKey = settings.get(API_KEY);
 		if (KitUtils.isEmpty(apiKey)) {
-			throw new IllegalArgumentException("Apptentive app key is required.");
+			throw new IllegalArgumentException("Apptentive API Key is required.");
 		}
+		ApptentiveInternal.createInstance(context.getApplicationContext(), apiKey);
 		if (callbacks == null) {
 			callbacks = new ApptentiveActivityLifecycleCallbacks();
 		}
 		((Application)context.getApplicationContext()).registerActivityLifecycleCallbacks(callbacks);
-		ApptentiveInternal.createInstance(context.getApplicationContext(), apiKey);
 		return null;
 	}
 
