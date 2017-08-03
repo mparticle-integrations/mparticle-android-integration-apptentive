@@ -34,10 +34,10 @@ public class ApptentiveKit extends KitIntegration implements KitIntegration.Even
 		String apptentiveAppKey = settings.get(APPTENTIVE_APP_KEY);
 		String apptentiveAppSignature = settings.get(Apptentive_APP_SIGNATURE);
 		if (KitUtils.isEmpty(apptentiveAppKey)) {
-			throw new IllegalArgumentException("Apptentive App Key is required.");
+			throw new IllegalArgumentException("Apptentive App Key is required. If you are migrating from a previous version, you may need to enter the new Apptentive App Key and Signature on the mParticle website.");
 		}
 		if (KitUtils.isEmpty(apptentiveAppSignature)) {
-			throw new IllegalArgumentException("Apptentive App Signature is required.");
+			throw new IllegalArgumentException("Apptentive App Signature is required. If you are migrating from a previous version, you may need to enter the new Apptentive App Key and Signature on the mParticle website.");
 		}
 		Apptentive.register((Application)context.getApplicationContext(), apptentiveAppKey, apptentiveAppSignature);
 		return null;
