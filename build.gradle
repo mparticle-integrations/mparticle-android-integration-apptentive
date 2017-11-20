@@ -13,9 +13,10 @@ apply plugin: 'com.mparticle.kit'
 android {
     defaultConfig {
         minSdkVersion 14
+        resValue "string", "apptentive_distribution_version", project.version
     }
 }
 
 dependencies {
-    compile 'com.apptentive:apptentive-android:4.0.1'
+    compile 'com.apptentive:apptentive-android:4.0.3'
 }
