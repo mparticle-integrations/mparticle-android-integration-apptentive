@@ -2,6 +2,7 @@ buildscript {
     repositories {
         mavenLocal()
         jcenter()
+        google()
     }
     dependencies {
         classpath 'com.mparticle:android-kit-plugin:' + project.version
@@ -18,5 +19,5 @@ android {
 }
 
 dependencies {
-    compile 'com.apptentive:apptentive-android:4.0.3'
+    compile 'com.apptentive:apptentive-android:5.1.0'
 }

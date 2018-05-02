@@ -4,6 +4,7 @@ import android.app.Application;
 import android.content.Context;
 
 import com.apptentive.android.sdk.Apptentive;
+import com.apptentive.android.sdk.ApptentiveConfiguration;
 import com.apptentive.android.sdk.model.CommerceExtendedData;
 import com.mparticle.MPEvent;
 import com.mparticle.MParticle;
@@ -39,7 +40,8 @@ public class ApptentiveKit extends KitIntegration implements KitIntegration.Even
 		if (KitUtils.isEmpty(apptentiveAppSignature)) {
 			throw new IllegalArgumentException("Apptentive App Signature is required. If you are migrating from a previous version, you may need to enter the new Apptentive App Key and Signature on the mParticle website.");
 		}
-		Apptentive.register((Application)context.getApplicationContext(), apptentiveAppKey, apptentiveAppSignature);
+		ApptentiveConfiguration configuration = new ApptentiveConfiguration(apptentiveAppKey, apptentiveAppSignature);
+		Apptentive.register((Application)context.getApplicationContext(), configuration);
 		return null;
 	}
 
