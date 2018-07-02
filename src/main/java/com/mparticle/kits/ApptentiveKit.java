@@ -1,19 +1,30 @@
 package com.mparticle.kits;
 
+import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
+import android.support.annotation.Nullable;
 
 import com.apptentive.android.sdk.Apptentive;
 import com.apptentive.android.sdk.ApptentiveConfiguration;
+import com.apptentive.android.sdk.ApptentiveLog;
+import com.apptentive.android.sdk.ApptentiveNotifications;
+import com.apptentive.android.sdk.conversation.Conversation;
+import com.apptentive.android.sdk.lifecycle.ApptentiveActivityLifecycleCallbacks;
 import com.apptentive.android.sdk.model.CommerceExtendedData;
+import com.apptentive.android.sdk.notifications.ApptentiveNotification;
+import com.apptentive.android.sdk.notifications.ApptentiveNotificationCenter;
+import com.apptentive.android.sdk.notifications.ApptentiveNotificationObserver;
 import com.mparticle.MPEvent;
 import com.mparticle.MParticle;
 import com.mparticle.commerce.CommerceEvent;
 import com.mparticle.commerce.Product;
 import com.mparticle.commerce.TransactionAttributes;
+import com.mparticle.identity.MParticleUser;
 
 import org.json.JSONException;
 
+import java.lang.ref.WeakReference;
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.HashMap;
@@ -21,7 +32,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-public class ApptentiveKit extends KitIntegration implements KitIntegration.EventListener, KitIntegration.CommerceListener, KitIntegration.AttributeListener {
+public class ApptentiveKit extends KitIntegration implements
+		KitIntegration.EventListener,
+		KitIntegration.CommerceListener,
+		KitIntegration.AttributeListener,
+		ApptentiveNotificationObserver {
 	private static final String APPTENTIVE_APP_KEY = "apptentiveAppKey";
 	private static final String Apptentive_APP_SIGNATURE = "apptentiveAppSignature";
 
@@ -40,9 +55,30 @@ public class ApptentiveKit extends KitIntegration implements KitIntegration.Even
 		if (KitUtils.isEmpty(apptentiveAppSignature)) {
 			throw new IllegalArgumentException("Apptentive App Signature is required. If you are migrating from a previous version, you may need to enter the new Apptentive App Key and Signature on the mParticle website.");
 		}
+
 		ApptentiveConfiguration configuration = new ApptentiveConfiguration(apptentiveAppKey, apptentiveAppSignature);
+		configuration.setLogLevel(ApptentiveLog.Level.VERBOSE);
+		configuration.setShouldSanitizeLogMessages(false);
 		Apptentive.register((Application)context.getApplicationContext(), configuration);
+
+		Activity activity = getActivity();
+		if (activity != null) {
+			ApptentiveActivityLifecycleCallbacks.getInstance().onActivityCreated(activity, null);
+			ApptentiveActivityLifecycleCallbacks.getInstance().onActivityStarted(activity);
+			ApptentiveActivityLifecycleCallbacks.getInstance().onActivityResumed(activity);
+		}
+
+		ApptentiveNotificationCenter.defaultCenter()
+				.addObserver(ApptentiveNotifications.NOTIFICATION_CONVERSATION_STATE_DID_CHANGE, this);
+
 		return null;
+	}
+
+	@Override
+	protected void onKitDestroy() {
+		super.onKitDestroy();
+
+		ApptentiveNotificationCenter.defaultCenter().removeObserver(this);
 	}
 
 	@Override
@@ -243,4 +279,34 @@ public class ApptentiveKit extends KitIntegration implements KitIntegration.Even
 		}
 		return null;
 	}
+
+	//region Notifications
+
+	@Override
+	public void onReceiveNotification(ApptentiveNotification notification) {
+		if (notification.hasName(ApptentiveNotifications.NOTIFICATION_CONVERSATION_STATE_DID_CHANGE)) {
+			Conversation conversation = notification.getRequiredUserInfo(ApptentiveNotifications.NOTIFICATION_KEY_CONVERSATION, Conversation.class);
+			if (conversation != null && conversation.hasActiveState()) {
+				MParticleUser currentUser = getCurrentUser();
+				if (currentUser == null) {
+					ApptentiveLog.w("Unable to update mParticle id: no current user");
+					return;
+				}
+
+				String userId = Long.toString(currentUser.getId());
+				ApptentiveLog.v("Updating mParticle id: %s", ApptentiveLog.hideIfSanitized(userId));
+
+				conversation.getPerson().setMParticleId(userId);
+			}
+		}
+	}
+
+	//endregion
+
+	private @Nullable Activity getActivity() {
+		WeakReference<Activity> ref = getCurrentActivity();
+		return ref != null ? ref.get() : null;
+	}
+
+
 }
