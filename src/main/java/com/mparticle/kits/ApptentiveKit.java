@@ -57,8 +57,6 @@ public class ApptentiveKit extends KitIntegration implements
 		}
 
 		ApptentiveConfiguration configuration = new ApptentiveConfiguration(apptentiveAppKey, apptentiveAppSignature);
-		configuration.setLogLevel(ApptentiveLog.Level.VERBOSE);
-		configuration.setShouldSanitizeLogMessages(false);
 		Apptentive.register((Application)context.getApplicationContext(), configuration);
 
 		Activity activity = getActivity();
