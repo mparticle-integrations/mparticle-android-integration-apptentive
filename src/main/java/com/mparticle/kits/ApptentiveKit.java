@@ -1,16 +1,13 @@
 package com.mparticle.kits;
 
-import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
-import android.support.annotation.Nullable;
 
 import com.apptentive.android.sdk.Apptentive;
 import com.apptentive.android.sdk.ApptentiveConfiguration;
 import com.apptentive.android.sdk.ApptentiveLog;
 import com.apptentive.android.sdk.ApptentiveNotifications;
 import com.apptentive.android.sdk.conversation.Conversation;
-import com.apptentive.android.sdk.lifecycle.ApptentiveActivityLifecycleCallbacks;
 import com.apptentive.android.sdk.model.CommerceExtendedData;
 import com.apptentive.android.sdk.notifications.ApptentiveNotification;
 import com.apptentive.android.sdk.notifications.ApptentiveNotificationCenter;
@@ -24,7 +21,6 @@ import com.mparticle.identity.MParticleUser;
 
 import org.json.JSONException;
 
-import java.lang.ref.WeakReference;
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.HashMap;
@@ -58,14 +54,6 @@ public class ApptentiveKit extends KitIntegration implements
 
     ApptentiveConfiguration configuration = new ApptentiveConfiguration(apptentiveAppKey, apptentiveAppSignature);
 		Apptentive.register((Application)context.getApplicationContext(), configuration);
-
-		Activity activity = getActivity();
-		if (activity != null) {
-			ApptentiveActivityLifecycleCallbacks.getInstance().onActivityCreated(activity, null);
-			ApptentiveActivityLifecycleCallbacks.getInstance().onActivityStarted(activity);
-			ApptentiveActivityLifecycleCallbacks.getInstance().onActivityResumed(activity);
-		}
-
 		ApptentiveNotificationCenter.defaultCenter()
 				.addObserver(ApptentiveNotifications.NOTIFICATION_CONVERSATION_STATE_DID_CHANGE, this);
 
@@ -299,11 +287,4 @@ public class ApptentiveKit extends KitIntegration implements
 	}
 
 	//endregion
-
-	private @Nullable Activity getActivity() {
-		WeakReference<Activity> ref = getCurrentActivity();
-		return ref != null ? ref.get() : null;
-	}
-
-
 }
