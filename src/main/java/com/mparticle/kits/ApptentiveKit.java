@@ -75,7 +75,6 @@ public class ApptentiveKit extends KitIntegration implements
 	@Override
 	protected void onKitDestroy() {
 		super.onKitDestroy();
-
 		ApptentiveNotificationCenter.defaultCenter().removeObserver(this);
 	}
 
