@@ -170,9 +170,9 @@ public class ApptentiveKit extends KitIntegration implements
 
 	@Override
 	public List<ReportingMessage> logEvent(MPEvent event) {
-		Map<String, String> customData = event.getInfo();
+		Map<String, Object> customData = CustomDataParser.parse(event.getInfo());
 		if (customData != null) {
-			Apptentive.engage(getContext(), event.getEventName(), Collections.<String, Object>unmodifiableMap(customData));
+			Apptentive.engage(getContext(), event.getEventName(), customData);
 		} else {
 			Apptentive.engage(getContext(), event.getEventName());
 		}
