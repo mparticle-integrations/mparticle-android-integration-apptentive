@@ -60,7 +60,7 @@ public class CustomDataParserTest {
         // string
         expected.put("key-13", "test");
 
-        Map<String, Object> actual = CustomDataParser.parse(data);
+        Map<String, Object> actual = CustomDataParser.parseCustomData(data);
         assertEquals(expected, actual);
     }
 }

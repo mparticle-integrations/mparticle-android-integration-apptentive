@@ -28,6 +28,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import static com.mparticle.kits.CustomDataParser.parseCustomData;
+import static com.mparticle.kits.CustomDataParser.parseValue;
+
 public class ApptentiveKit extends KitIntegration implements
 		KitIntegration.EventListener,
 		KitIntegration.CommerceListener,
@@ -125,7 +128,7 @@ public class ApptentiveKit extends KitIntegration implements
 			} else if (entry.getKey().equalsIgnoreCase(MParticle.UserAttributes.LASTNAME)) {
 				lastName = entry.getValue();
 			} else {
-				Apptentive.addCustomPersonData(entry.getKey(), entry.getValue());
+				Apptentive.addCustomPersonData(entry.getKey(), parseValue(entry.getValue());
 			}
 		}
 		String fullName;
@@ -170,9 +173,9 @@ public class ApptentiveKit extends KitIntegration implements
 
 	@Override
 	public List<ReportingMessage> logEvent(MPEvent event) {
-		Map<String, Object> customData = CustomDataParser.parse(event.getInfo());
+		Map<String, String> customData = event.getInfo();
 		if (customData != null) {
-			Apptentive.engage(getContext(), event.getEventName(), customData);
+			Apptentive.engage(getContext(), event.getEventName(), parseCustomData(customData));
 		} else {
 			Apptentive.engage(getContext(), event.getEventName());
 		}

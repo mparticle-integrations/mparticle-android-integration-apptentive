@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 final class CustomDataParser {
-    public static Map<String, Object> parse(Map<String, String> map) {
+    public static Map<String, Object> parseCustomData(Map<String, String> map) {
         Map<String, Object> res = new HashMap<>();
         for (Map.Entry<String, String> e : map.entrySet()) {
             res.put(e.getKey(), parseValue(e.getValue()));
@@ -14,7 +14,7 @@ final class CustomDataParser {
         return res;
     }
 
-    private static Object parseValue(String value) {
+    public static Object parseValue(String value) {
         try {
             return value != null ? parseValueGuarded(value) : null;
         } catch (Exception e) {
