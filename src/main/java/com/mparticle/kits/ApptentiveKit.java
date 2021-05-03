@@ -96,7 +96,7 @@ public class ApptentiveKit extends KitIntegration implements
 		} else if (attributeKey.equalsIgnoreCase(MParticle.UserAttributes.LASTNAME)) {
 			lastName = attributeValue;
 		} else {
-			Apptentive.addCustomPersonData(attributeKey, attributeValue);
+			addCustomPersonData(attributeKey, parseValue(attributeValue));
 		}
 
 		String fullName;
@@ -128,7 +128,7 @@ public class ApptentiveKit extends KitIntegration implements
 			} else if (entry.getKey().equalsIgnoreCase(MParticle.UserAttributes.LASTNAME)) {
 				lastName = entry.getValue();
 			} else {
-				Apptentive.addCustomPersonData(entry.getKey(), parseValue(entry.getValue());
+				addCustomPersonData(entry.getKey(), parseValue(entry.getValue()));
 			}
 		}
 		String fullName;
@@ -254,7 +254,7 @@ public class ApptentiveKit extends KitIntegration implements
 					Map<String, String> customData = event.getCustomAttributes();
 					Apptentive.engage(getContext(),
 							String.format("eCommerce - %s", event.getProductAction()),
-							customData == null ? null : Collections.<String, Object>unmodifiableMap(customData),
+							customData == null ? null : parseCustomData(customData),
 							apptentiveCommerceData);
 					List<ReportingMessage> messages = new LinkedList<ReportingMessage>();
 					messages.add(ReportingMessage.fromEvent(this, event));
@@ -286,6 +286,23 @@ public class ApptentiveKit extends KitIntegration implements
 
 				conversation.getPerson().setMParticleId(userId);
 			}
+		}
+	}
+
+	//endregion
+
+	//region Helpers
+
+	/* Apptentive SDK does not provide a function which accepts Object as custom data so we need to cast */
+	private void addCustomPersonData(String key, Object value) {
+		if (value instanceof String) {
+			Apptentive.addCustomPersonData(key, (String) value);
+		} else if (value instanceof Boolean) {
+			Apptentive.addCustomPersonData(key, (Boolean) value);
+		} else if (value instanceof Number) {
+			Apptentive.addCustomPersonData(key, (Number) value);
+		} else {
+			ApptentiveLog.e("Unexpected custom person data type: %s", value != null ? value.getClass() : null);
 		}
 	}
 
