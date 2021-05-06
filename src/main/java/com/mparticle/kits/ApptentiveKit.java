@@ -39,6 +39,9 @@ public class ApptentiveKit extends KitIntegration implements
 	private static final String APPTENTIVE_APP_KEY = "apptentiveAppKey";
 	private static final String Apptentive_APP_SIGNATURE = "apptentiveAppSignature";
 
+	private String lastKnownFirstName;
+	private String lastKnownLastName;
+
 	@Override
 	public String getName() {
 		return "Apptentive";
@@ -88,22 +91,19 @@ public class ApptentiveKit extends KitIntegration implements
 
 	@Override
 	public void setUserAttribute(String attributeKey, String attributeValue) {
-		String firstName = "";
-		String lastName = "";
-
 		if (attributeKey.equalsIgnoreCase(MParticle.UserAttributes.FIRSTNAME)) {
-			firstName = attributeValue;
+			lastKnownFirstName = attributeValue;
 		} else if (attributeKey.equalsIgnoreCase(MParticle.UserAttributes.LASTNAME)) {
-			lastName = attributeValue;
+			lastKnownLastName = attributeValue;
 		} else {
 			addCustomPersonData(attributeKey, parseValue(attributeValue));
 		}
 
 		String fullName;
-		if (!KitUtils.isEmpty(firstName) && !KitUtils.isEmpty(lastName)) {
-			fullName = firstName + " " + lastName;
+		if (!KitUtils.isEmpty(lastKnownFirstName) && !KitUtils.isEmpty(lastKnownLastName)) {
+			fullName = lastKnownFirstName + " " + lastKnownLastName;
 		} else {
-			fullName = firstName + lastName;
+			fullName = lastKnownFirstName + lastKnownLastName;
 		}
 		Apptentive.setPersonName(fullName.trim());
 	}
