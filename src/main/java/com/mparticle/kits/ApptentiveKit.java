@@ -97,13 +97,16 @@ public class ApptentiveKit extends KitIntegration implements
 			lastKnownLastName = attributeValue;
 		} else {
 			addCustomPersonData(attributeKey, parseValue(attributeValue));
+			return;
 		}
 
-		String fullName;
-		if (!KitUtils.isEmpty(lastKnownFirstName) && !KitUtils.isEmpty(lastKnownLastName)) {
-			fullName = lastKnownFirstName + " " + lastKnownLastName;
-		} else {
-			fullName = lastKnownFirstName + lastKnownLastName;
+		String fullName = "";
+		if (!KitUtils.isEmpty(lastKnownFirstName)) {
+			fullName += lastKnownFirstName;
+		}
+		if (!KitUtils.isEmpty(lastKnownLastName)) {
+			if (fullName.length() > 0) { fullName += " "; }
+			fullName += lastKnownLastName;
 		}
 		Apptentive.setPersonName(fullName.trim());
 	}
