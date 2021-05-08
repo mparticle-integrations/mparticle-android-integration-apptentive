@@ -9,6 +9,7 @@ import com.apptentive.android.sdk.ApptentiveLog;
 import com.apptentive.android.sdk.ApptentiveNotifications;
 import com.apptentive.android.sdk.conversation.Conversation;
 import com.apptentive.android.sdk.model.CommerceExtendedData;
+import com.apptentive.android.sdk.model.ExtendedData;
 import com.apptentive.android.sdk.notifications.ApptentiveNotification;
 import com.apptentive.android.sdk.notifications.ApptentiveNotificationCenter;
 import com.apptentive.android.sdk.notifications.ApptentiveNotificationObserver;
@@ -22,7 +23,6 @@ import com.mparticle.identity.MParticleUser;
 import org.json.JSONException;
 
 import java.math.BigDecimal;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -176,12 +176,7 @@ public class ApptentiveKit extends KitIntegration implements
 
 	@Override
 	public List<ReportingMessage> logEvent(MPEvent event) {
-		Map<String, String> customData = event.getInfo();
-		if (customData != null) {
-			Apptentive.engage(getContext(), event.getEventName(), parseCustomData(customData));
-		} else {
-			Apptentive.engage(getContext(), event.getEventName());
-		}
+		engage(getContext(), event.getEventName(), event.getInfo());
 		List<ReportingMessage> messageList = new LinkedList<ReportingMessage>();
 		messageList.add(ReportingMessage.fromEvent(this, event));
 		return messageList;
@@ -254,10 +249,9 @@ public class ApptentiveKit extends KitIntegration implements
 
 
 				if (apptentiveCommerceData != null) {
-					Map<String, String> customData = event.getCustomAttributes();
-					Apptentive.engage(getContext(),
+					engage(getContext(),
 							String.format("eCommerce - %s", event.getProductAction()),
-							customData == null ? null : parseCustomData(customData),
+							event.getCustomAttributes(),
 							apptentiveCommerceData);
 					List<ReportingMessage> messages = new LinkedList<ReportingMessage>();
 					messages.add(ReportingMessage.fromEvent(this, event));
@@ -295,6 +289,14 @@ public class ApptentiveKit extends KitIntegration implements
 	//endregion
 
 	//region Helpers
+
+	private void engage(Context context, String event, Map<String, String> customData) {
+		engage(context, event, customData, (ExtendedData[]) null);
+	}
+
+	private void engage(Context context, String event, Map<String, String> customData, ExtendedData... extendedData) {
+		Apptentive.engage(context, event, parseCustomData(customData), extendedData);
+	}
 
 	/* Apptentive SDK does not provide a function which accepts Object as custom data so we need to cast */
 	private void addCustomPersonData(String key, Object value) {
