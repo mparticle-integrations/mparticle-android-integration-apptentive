@@ -253,7 +253,8 @@ public class ApptentiveKit extends KitIntegration implements
 					engage(getContext(),
 							String.format("eCommerce - %s", event.getProductAction()),
 							event.getCustomAttributes(),
-							apptentiveCommerceData);
+							apptentiveCommerceData
+					);
 					List<ReportingMessage> messages = new LinkedList<ReportingMessage>();
 					messages.add(ReportingMessage.fromEvent(this, event));
 					return messages;
