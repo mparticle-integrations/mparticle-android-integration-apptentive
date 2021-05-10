@@ -9,6 +9,7 @@ import com.apptentive.android.sdk.ApptentiveLog;
 import com.apptentive.android.sdk.ApptentiveNotifications;
 import com.apptentive.android.sdk.conversation.Conversation;
 import com.apptentive.android.sdk.model.CommerceExtendedData;
+import com.apptentive.android.sdk.model.ExtendedData;
 import com.apptentive.android.sdk.notifications.ApptentiveNotification;
 import com.apptentive.android.sdk.notifications.ApptentiveNotificationCenter;
 import com.apptentive.android.sdk.notifications.ApptentiveNotificationObserver;
@@ -22,11 +23,13 @@ import com.mparticle.identity.MParticleUser;
 import org.json.JSONException;
 
 import java.math.BigDecimal;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+
+import static com.mparticle.kits.CustomDataParser.parseCustomData;
+import static com.mparticle.kits.CustomDataParser.parseValue;
 
 public class ApptentiveKit extends KitIntegration implements
 		KitIntegration.EventListener,
@@ -35,6 +38,9 @@ public class ApptentiveKit extends KitIntegration implements
 		ApptentiveNotificationObserver {
 	private static final String APPTENTIVE_APP_KEY = "apptentiveAppKey";
 	private static final String Apptentive_APP_SIGNATURE = "apptentiveAppSignature";
+
+	private String lastKnownFirstName;
+	private String lastKnownLastName;
 
 	@Override
 	public String getName() {
@@ -85,22 +91,22 @@ public class ApptentiveKit extends KitIntegration implements
 
 	@Override
 	public void setUserAttribute(String attributeKey, String attributeValue) {
-		String firstName = "";
-		String lastName = "";
-
 		if (attributeKey.equalsIgnoreCase(MParticle.UserAttributes.FIRSTNAME)) {
-			firstName = attributeValue;
+			lastKnownFirstName = attributeValue;
 		} else if (attributeKey.equalsIgnoreCase(MParticle.UserAttributes.LASTNAME)) {
-			lastName = attributeValue;
+			lastKnownLastName = attributeValue;
 		} else {
-			Apptentive.addCustomPersonData(attributeKey, attributeValue);
+			addCustomPersonData(attributeKey, parseValue(attributeValue));
+			return;
 		}
 
-		String fullName;
-		if (!KitUtils.isEmpty(firstName) && !KitUtils.isEmpty(lastName)) {
-			fullName = firstName + " " + lastName;
-		} else {
-			fullName = firstName + lastName;
+		String fullName = "";
+		if (!KitUtils.isEmpty(lastKnownFirstName)) {
+			fullName += lastKnownFirstName;
+		}
+		if (!KitUtils.isEmpty(lastKnownLastName)) {
+			if (fullName.length() > 0) { fullName += " "; }
+			fullName += lastKnownLastName;
 		}
 		Apptentive.setPersonName(fullName.trim());
 	}
@@ -125,7 +131,7 @@ public class ApptentiveKit extends KitIntegration implements
 			} else if (entry.getKey().equalsIgnoreCase(MParticle.UserAttributes.LASTNAME)) {
 				lastName = entry.getValue();
 			} else {
-				Apptentive.addCustomPersonData(entry.getKey(), entry.getValue());
+				addCustomPersonData(entry.getKey(), parseValue(entry.getValue()));
 			}
 		}
 		String fullName;
@@ -170,12 +176,7 @@ public class ApptentiveKit extends KitIntegration implements
 
 	@Override
 	public List<ReportingMessage> logEvent(MPEvent event) {
-		Map<String, String> customData = event.getInfo();
-		if (customData != null) {
-			Apptentive.engage(getContext(), event.getEventName(), Collections.<String, Object>unmodifiableMap(customData));
-		} else {
-			Apptentive.engage(getContext(), event.getEventName());
-		}
+		engage(getContext(), event.getEventName(), event.getInfo());
 		List<ReportingMessage> messageList = new LinkedList<ReportingMessage>();
 		messageList.add(ReportingMessage.fromEvent(this, event));
 		return messageList;
@@ -183,6 +184,7 @@ public class ApptentiveKit extends KitIntegration implements
 
 	@Override
 	public List<ReportingMessage> logScreen(String screenName, Map<String, String> eventAttributes) {
+		engage(getContext(), screenName, eventAttributes);
 		return null;
 	}
 
@@ -248,11 +250,11 @@ public class ApptentiveKit extends KitIntegration implements
 
 
 				if (apptentiveCommerceData != null) {
-					Map<String, String> customData = event.getCustomAttributes();
-					Apptentive.engage(getContext(),
+					engage(getContext(),
 							String.format("eCommerce - %s", event.getProductAction()),
-							customData == null ? null : Collections.<String, Object>unmodifiableMap(customData),
-							apptentiveCommerceData);
+							event.getCustomAttributes(),
+							apptentiveCommerceData
+					);
 					List<ReportingMessage> messages = new LinkedList<ReportingMessage>();
 					messages.add(ReportingMessage.fromEvent(this, event));
 					return messages;
@@ -283,6 +285,31 @@ public class ApptentiveKit extends KitIntegration implements
 
 				conversation.getPerson().setMParticleId(userId);
 			}
+		}
+	}
+
+	//endregion
+
+	//region Helpers
+
+	private void engage(Context context, String event, Map<String, String> customData) {
+		engage(context, event, customData, (ExtendedData[]) null);
+	}
+
+	private void engage(Context context, String event, Map<String, String> customData, ExtendedData... extendedData) {
+		Apptentive.engage(context, event, parseCustomData(customData), extendedData);
+	}
+
+	/* Apptentive SDK does not provide a function which accepts Object as custom data so we need to cast */
+	private void addCustomPersonData(String key, Object value) {
+		if (value instanceof String) {
+			Apptentive.addCustomPersonData(key, (String) value);
+		} else if (value instanceof Boolean) {
+			Apptentive.addCustomPersonData(key, (Boolean) value);
+		} else if (value instanceof Number) {
+			Apptentive.addCustomPersonData(key, (Number) value);
+		} else {
+			ApptentiveLog.e("Unexpected custom person data type: %s", value != null ? value.getClass() : null);
 		}
 	}
 
