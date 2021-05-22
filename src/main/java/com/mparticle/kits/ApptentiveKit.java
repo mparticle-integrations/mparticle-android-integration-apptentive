@@ -37,7 +37,7 @@ public class ApptentiveKit extends KitIntegration implements
 		KitIntegration.AttributeListener,
 		ApptentiveNotificationObserver {
 	private static final String APPTENTIVE_APP_KEY = "apptentiveAppKey";
-	private static final String Apptentive_APP_SIGNATURE = "apptentiveAppSignature";
+	private static final String APPTENTIVE_APP_SIGNATURE = "apptentiveAppSignature";
 
 	private String lastKnownFirstName;
 	private String lastKnownLastName;
@@ -50,7 +50,7 @@ public class ApptentiveKit extends KitIntegration implements
 	@Override
 	protected List<ReportingMessage> onKitCreate(Map<String, String> settings, Context context) {
 		String apptentiveAppKey = settings.get(APPTENTIVE_APP_KEY);
-		String apptentiveAppSignature = settings.get(Apptentive_APP_SIGNATURE);
+		String apptentiveAppSignature = settings.get(APPTENTIVE_APP_SIGNATURE);
 		if (KitUtils.isEmpty(apptentiveAppKey)) {
 			throw new IllegalArgumentException("Apptentive App Key is required. If you are migrating from a previous version, you may need to enter the new Apptentive App Key and Signature on the mParticle website.");
 		}
