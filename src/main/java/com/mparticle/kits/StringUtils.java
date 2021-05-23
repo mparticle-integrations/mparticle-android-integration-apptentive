@@ -28,4 +28,12 @@ final class StringUtils {
             return null;
         }
     }
+
+    public static Boolean tryParseBoolean(String value) {
+        try {
+            return Boolean.valueOf(value);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
 }

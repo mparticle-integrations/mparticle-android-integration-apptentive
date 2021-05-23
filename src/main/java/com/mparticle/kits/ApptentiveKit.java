@@ -28,7 +28,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import static com.mparticle.kits.CustomDataParser.parseCustomData;
+import static com.apptentive.android.sdk.ApptentiveLogTag.UTIL;
 import static com.mparticle.kits.CustomDataParser.parseValue;
 
 public class ApptentiveKit extends KitIntegration implements
@@ -36,9 +36,15 @@ public class ApptentiveKit extends KitIntegration implements
 		KitIntegration.CommerceListener,
 		KitIntegration.AttributeListener,
 		ApptentiveNotificationObserver {
+
 	private static final String APPTENTIVE_APP_KEY = "apptentiveAppKey";
 	private static final String APPTENTIVE_APP_SIGNATURE = "apptentiveAppSignature";
+	private static final String ENABLE_TYPE_DETECTION = "enableTypeDetection";
 
+	private static final String SUFFIX_KEY_FLAG = "_flag";
+	private static final String SUFFIX_KEY_NUMBER = "_number";
+
+	private boolean enableTypeDetection;
 	private String lastKnownFirstName;
 	private String lastKnownLastName;
 
@@ -58,7 +64,9 @@ public class ApptentiveKit extends KitIntegration implements
 			throw new IllegalArgumentException("Apptentive App Signature is required. If you are migrating from a previous version, you may need to enter the new Apptentive App Key and Signature on the mParticle website.");
 		}
 
-    ApptentiveConfiguration configuration = new ApptentiveConfiguration(apptentiveAppKey, apptentiveAppSignature);
+		enableTypeDetection = tryParseSettingFlag(settings, ENABLE_TYPE_DETECTION, false);
+
+    	ApptentiveConfiguration configuration = new ApptentiveConfiguration(apptentiveAppKey, apptentiveAppSignature);
 		Apptentive.register((Application)context.getApplicationContext(), configuration);
 		ApptentiveNotificationCenter.defaultCenter()
 				.addObserver(ApptentiveNotifications.NOTIFICATION_CONVERSATION_STATE_DID_CHANGE, this);
@@ -96,7 +104,7 @@ public class ApptentiveKit extends KitIntegration implements
 		} else if (attributeKey.equalsIgnoreCase(MParticle.UserAttributes.LASTNAME)) {
 			lastKnownLastName = attributeValue;
 		} else {
-			addCustomPersonData(attributeKey, parseValue(attributeValue));
+			addCustomPersonData(attributeKey, attributeValue);
 			return;
 		}
 
@@ -131,7 +139,7 @@ public class ApptentiveKit extends KitIntegration implements
 			} else if (entry.getKey().equalsIgnoreCase(MParticle.UserAttributes.LASTNAME)) {
 				lastName = entry.getValue();
 			} else {
-				addCustomPersonData(entry.getKey(), parseValue(entry.getValue()));
+				addCustomPersonData(entry.getKey(), entry.getValue());
 			}
 		}
 		String fullName;
@@ -301,16 +309,66 @@ public class ApptentiveKit extends KitIntegration implements
 	}
 
 	/* Apptentive SDK does not provide a function which accepts Object as custom data so we need to cast */
-	private void addCustomPersonData(String key, Object value) {
-		if (value instanceof String) {
-			Apptentive.addCustomPersonData(key, (String) value);
-		} else if (value instanceof Boolean) {
-			Apptentive.addCustomPersonData(key, (Boolean) value);
-		} else if (value instanceof Number) {
-			Apptentive.addCustomPersonData(key, (Number) value);
-		} else {
-			ApptentiveLog.e("Unexpected custom person data type: %s", value != null ? value.getClass() : null);
+	private void addCustomPersonData(String key, String value) {
+		// original key
+		Apptentive.addCustomPersonData(key, value);
+
+		// typed key
+		if (enableTypeDetection) {
+			final Object typedValue = parseValue(value);
+			if (typedValue instanceof String) {
+				// the value is already set
+			} else if (typedValue instanceof Boolean) {
+				Apptentive.addCustomPersonData(key + SUFFIX_KEY_FLAG, (Boolean) typedValue);
+			} else if (typedValue instanceof Number) {
+				Apptentive.addCustomPersonData(key + SUFFIX_KEY_NUMBER, (Number) typedValue);
+			} else {
+				ApptentiveLog.e("Unexpected custom person data type: %s", typedValue != null ? typedValue.getClass() : null);
+			}
 		}
+	}
+
+	private Map<String, Object> parseCustomData(Map<String, String> map) {
+		if (map != null) {
+			final Map<String, Object> res = new HashMap<>();
+			for (Map.Entry<String, String> e : map.entrySet()) {
+				final String key = e.getKey();
+				final String value = e.getValue();
+
+				// original key
+				res.put(key, value);
+
+				// typed key
+				if (enableTypeDetection) {
+					final Object typedValue = parseValue(value);
+					if (typedValue instanceof String) {
+						// the value is already set
+					} else if (typedValue instanceof Boolean) {
+						res.put(key + SUFFIX_KEY_FLAG, (Boolean) typedValue);
+					} else if (typedValue instanceof Number) {
+						res.put(key + SUFFIX_KEY_NUMBER, (Number) typedValue);
+					} else {
+						ApptentiveLog.e("Unexpected custom data type: %s", typedValue != null ? typedValue.getClass() : null);
+					}
+				}
+			}
+			return res;
+		}
+
+		return null;
+	}
+
+	private static boolean tryParseSettingFlag(Map<String, String> settings, String key, boolean defaultValue) {
+		final String value = settings.get(key);
+		if (value != null) {
+			final Boolean flag = StringUtils.tryParseBoolean(value);
+			if (flag != null) {
+				return flag;
+			}
+			ApptentiveLog.w(UTIL, "Unable to parse boolean flag '%s': %s", key, value);
+		}
+
+		return defaultValue;
 	}
 
 	//endregion
