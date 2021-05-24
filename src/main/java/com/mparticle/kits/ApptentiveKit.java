@@ -28,8 +28,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import static com.apptentive.android.sdk.ApptentiveLogTag.UTIL;
 import static com.mparticle.kits.CustomDataParser.parseValue;
+import static com.mparticle.kits.StringUtils.tryParseSettingFlag;
 
 public class ApptentiveKit extends KitIntegration implements
 		KitIntegration.EventListener,
@@ -356,19 +356,6 @@ public class ApptentiveKit extends KitIntegration implements
 		}
 
 		return null;
-	}
-
-	private static boolean tryParseSettingFlag(Map<String, String> settings, String key, boolean defaultValue) {
-		final String value = settings.get(key);
-		if (value != null) {
-			final Boolean flag = StringUtils.tryParseBoolean(value);
-			if (flag != null) {
-				return flag;
-			}
-			ApptentiveLog.w(UTIL, "Unable to parse boolean flag '%s': %s", key, value);
-		}
-
-		return defaultValue;
 	}
 
 	//endregion
