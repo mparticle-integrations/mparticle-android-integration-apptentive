@@ -2,65 +2,35 @@ package com.mparticle.kits;
 
 import org.junit.Test;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.junit.Assert.*;
+import static com.mparticle.kits.CustomDataParser.parseValue;
+import static java.lang.Boolean.FALSE;
+import static java.lang.Boolean.TRUE;
+import static org.junit.Assert.assertEquals;
 
 public class CustomDataParserTest {
     @Test
     public void testParseData() {
-        Map<String, String> data = new HashMap<>();
-
         // boolean
-        data.put("key-1", "true");
-        data.put("key-2", "True");
-        data.put("key-3", "false");
-        data.put("key-4", "False");
+        assertEquals(TRUE, parseValue("true"));
+        assertEquals(TRUE, parseValue("True"));
+        assertEquals(FALSE, parseValue("false"));
+        assertEquals(FALSE, parseValue("False"));
 
         // integer
-        data.put("key-5", "12345");
-        data.put("key-6", "-12345");
-        data.put("key-7", Integer.toString(Integer.MIN_VALUE));
-        data.put("key-8", Integer.toString(Integer.MAX_VALUE));
+        assertEquals(12345, parseValue("12345"));
+        assertEquals(-12345, parseValue("-12345"));
+        assertEquals(Integer.MIN_VALUE, parseValue(Integer.toString(Integer.MIN_VALUE)));
+        assertEquals(Integer.MAX_VALUE, parseValue(Integer.toString(Integer.MAX_VALUE)));
 
         // long
-        data.put("key-9", Long.toString(Long.MIN_VALUE));
-        data.put("key-10", Long.toString(Long.MAX_VALUE));
+        assertEquals(Long.MIN_VALUE, parseValue(Long.toString(Long.MIN_VALUE)));
+        assertEquals(Long.MAX_VALUE, parseValue(Long.toString(Long.MAX_VALUE)));
 
         // double
-        data.put("key-11", "3.14");
-        data.put("key-12", "-3.14");
+        assertEquals(3.14, parseValue("3.14"));
+        assertEquals(-3.14, parseValue("-3.14"));
 
         // string
-        data.put("key-13", "test");
-
-        Map<String, Object> expected = new HashMap<>();
-
-        // boolean
-        expected.put("key-1", Boolean.TRUE);
-        expected.put("key-2", Boolean.TRUE);
-        expected.put("key-3", Boolean.FALSE);
-        expected.put("key-4", Boolean.FALSE);
-
-        // integer
-        expected.put("key-5", 12345);
-        expected.put("key-6", -12345);
-        expected.put("key-7", Integer.MIN_VALUE);
-        expected.put("key-8", Integer.MAX_VALUE);
-
-        // long
-        expected.put("key-9", Long.MIN_VALUE);
-        expected.put("key-10", Long.MAX_VALUE);
-
-        // double
-        expected.put("key-11", 3.14);
-        expected.put("key-12", -3.14);
-
-        // string
-        expected.put("key-13", "test");
-
-        Map<String, Object> actual = CustomDataParser.parseCustomData(data);
-        assertEquals(expected, actual);
+        assertEquals("test", parseValue("test"));
     }
 }
