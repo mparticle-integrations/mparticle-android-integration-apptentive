@@ -64,7 +64,7 @@ public class ApptentiveKit extends KitIntegration implements
 			throw new IllegalArgumentException("Apptentive App Signature is required. If you are migrating from a previous version, you may need to enter the new Apptentive App Key and Signature on the mParticle website.");
 		}
 
-		enableTypeDetection = tryParseSettingFlag(settings, ENABLE_TYPE_DETECTION, false);
+		enableTypeDetection = tryParseSettingFlag(settings, ENABLE_TYPE_DETECTION, true);
 
     	ApptentiveConfiguration configuration = new ApptentiveConfiguration(apptentiveAppKey, apptentiveAppSignature);
 		Apptentive.register((Application)context.getApplicationContext(), configuration);
