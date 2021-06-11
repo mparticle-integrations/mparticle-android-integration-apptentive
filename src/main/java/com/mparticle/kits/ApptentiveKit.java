@@ -193,7 +193,9 @@ public class ApptentiveKit extends KitIntegration implements
 	@Override
 	public List<ReportingMessage> logScreen(String screenName, Map<String, String> eventAttributes) {
 		engage(getContext(), screenName, eventAttributes);
-		return null;
+		List<ReportingMessage> messages = new LinkedList<ReportingMessage>();
+		messages.add(new ReportingMessage(this, ReportingMessage.MessageType.SCREEN_VIEW, System.currentTimeMillis(), eventAttributes));
+		return messages;
 	}
 
 	@Override
