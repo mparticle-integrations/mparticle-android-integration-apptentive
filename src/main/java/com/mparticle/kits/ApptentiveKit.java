@@ -184,7 +184,7 @@ public class ApptentiveKit extends KitIntegration implements
 
 	@Override
 	public List<ReportingMessage> logEvent(MPEvent event) {
-		engage(getContext(), event.getEventName(), event.getInfo());
+		engage(getContext(), event.getEventName(), event.getCustomAttributeStrings());
 		List<ReportingMessage> messageList = new LinkedList<ReportingMessage>();
 		messageList.add(ReportingMessage.fromEvent(this, event));
 		return messageList;
@@ -262,7 +262,7 @@ public class ApptentiveKit extends KitIntegration implements
 				if (apptentiveCommerceData != null) {
 					engage(getContext(),
 							String.format("eCommerce - %s", event.getProductAction()),
-							event.getCustomAttributes(),
+							event.getCustomAttributeStrings(),
 							apptentiveCommerceData
 					);
 					List<ReportingMessage> messages = new LinkedList<ReportingMessage>();
