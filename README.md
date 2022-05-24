@@ -18,7 +18,7 @@ This repository contains the [Apptentive](https://www.apptentive.com/) integrati
 
 ### Documentation
 
-[Apptentive integration](http://docs.mparticle.com/?java#apptentive)
+[Apptentive integration](https://docs.mparticle.com/integrations/apptentive/event/)
 
 [Apptentive-mParticle Integration](https://learn.apptentive.com/knowledge-base/mparticle-integration-android)
 
