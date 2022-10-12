@@ -21,6 +21,7 @@ apply plugin: 'com.mparticle.kit'
 apply plugin: 'kotlin-android'
 
 android {
+    namespace 'com.mparticle.kits.apptentive'
     defaultConfig {
         minSdkVersion 16
         resValue "string", "apptentive_distribution", "mParticle"
