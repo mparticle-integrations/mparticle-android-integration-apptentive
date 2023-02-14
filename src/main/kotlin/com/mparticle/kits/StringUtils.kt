@@ -1,7 +1,6 @@
 package com.mparticle.kits
 
-import com.apptentive.android.sdk.ApptentiveLog
-import com.apptentive.android.sdk.ApptentiveLogTag
+import android.util.Log
 
 internal object StringUtils {
     @JvmStatic
@@ -16,12 +15,9 @@ internal object StringUtils {
             if (flag != null) {
                 return flag
             }
-            ApptentiveLog.w(
-                ApptentiveLogTag.UTIL,
-                "Unable to parse boolean flag '%s': %s",
-                key,
-                value
-            )
+            Log.w(
+                "MPartile-Util",
+                "Unable to parse boolean flag $key: $value")
         }
         return defaultValue
     }

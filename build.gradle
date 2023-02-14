@@ -6,8 +6,10 @@ buildscript {
 
     repositories {
         google()
-        mavenLocal()
         mavenCentral()
+        maven {
+            url "https://apptentive.jfrog.io/artifactory/NewAndroidSDK"
+        }
     }
 
     dependencies {
@@ -20,6 +22,7 @@ buildscript {
 plugins {
     id "org.sonarqube" version "3.5.0.2730"
     id "org.jlleitschuh.gradle.ktlint" version "11.1.0"
+    id 'org.gradle.maven-publish'
 }
 
 sonarqube {
@@ -43,6 +46,36 @@ android {
     }
 }
 
+task androidSourcesJar(type: Jar) {
+    getArchiveClassifier().set('sources')
+    from android.sourceSets.main.java.srcDirs
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            groupId = 'com.mparticle'
+            artifactId = 'android-apptentive-kit'
+            version = "6.0.1"
+            artifact("$buildDir/outputs/aar/android-apptentive-kit-release.aar")
+            artifact androidSourcesJar
+        }
+    }
+    repositories {
+        mavenLocal()
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        maven {
+            url "https://apptentive.jfrog.io/artifactory/NewAndroidSDK"
+        }
+    }
+}
+
 dependencies {
-    api 'com.apptentive:apptentive-android:5.8.4'
+    implementation 'com.apptentive:apptentive-kit-android:6.0.3-public'
 }

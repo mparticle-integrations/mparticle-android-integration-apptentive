@@ -2,32 +2,26 @@ package com.mparticle.kits
 
 import android.app.Application
 import android.content.Context
-import com.apptentive.android.sdk.Apptentive
-import com.apptentive.android.sdk.ApptentiveConfiguration
-import com.apptentive.android.sdk.ApptentiveLog
-import com.apptentive.android.sdk.ApptentiveNotifications
-import com.apptentive.android.sdk.conversation.Conversation
-import com.apptentive.android.sdk.model.CommerceExtendedData
-import com.apptentive.android.sdk.model.ExtendedData
-import com.apptentive.android.sdk.notifications.ApptentiveNotification
-import com.apptentive.android.sdk.notifications.ApptentiveNotificationCenter
-import com.apptentive.android.sdk.notifications.ApptentiveNotificationObserver
+import android.util.Log
+import apptentive.com.android.feedback.Apptentive
+import apptentive.com.android.feedback.ApptentiveActivityInfo
+import apptentive.com.android.feedback.ApptentiveConfiguration
+import apptentive.com.android.feedback.RegisterResult
 import com.mparticle.MPEvent
 import com.mparticle.MParticle
 import com.mparticle.MParticle.IdentityType
-import com.mparticle.commerce.CommerceEvent
-import com.mparticle.commerce.TransactionAttributes
 import com.mparticle.kits.KitIntegration.AttributeListener
-import com.mparticle.kits.KitIntegration.CommerceListener
-import org.json.JSONException
-import java.math.BigDecimal
 import java.util.*
 
-class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, CommerceListener,
-    AttributeListener, ApptentiveNotificationObserver {
+class ApptentiveKit : KitIntegration(), KitIntegration.EventListener,
+    AttributeListener  {
     private var enableTypeDetection = false
     private var lastKnownFirstName: String? = null
     private var lastKnownLastName: String? = null
+
+    lateinit var apptentiveActivityInfo: ApptentiveActivityInfo
+
+
     override fun getName(): String = NAME
     override fun onKitCreate(
         settings: Map<String, String>,
@@ -41,19 +35,15 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, CommerceLi
 
         if (apptentiveAppKey != null && apptentiveAppSignature != null) {
             val configuration = ApptentiveConfiguration(apptentiveAppKey, apptentiveAppSignature)
-            Apptentive.register(context.applicationContext as Application, configuration)
-            ApptentiveNotificationCenter.defaultCenter()
-                .addObserver(
-                    ApptentiveNotifications.NOTIFICATION_CONVERSATION_STATE_DID_CHANGE,
-                    this
-                )
-        }
-        return emptyList()
-    }
+            Apptentive.register(context.applicationContext as Application, configuration) { registerResult ->
+                if (registerResult is RegisterResult.Success) {
+                    Apptentive.setMParticleId(currentUser?.id.toString())
+                }
+            }
 
-    override fun onKitDestroy() {
-        super.onKitDestroy()
-        ApptentiveNotificationCenter.defaultCenter().removeObserver(this)
+        }
+        Apptentive.registerApptentiveActivityInfoCallback(apptentiveActivityInfo)
+        return emptyList()
     }
 
     override fun setOptOut(optedOut: Boolean): List<ReportingMessage> = emptyList()
@@ -161,127 +151,16 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, CommerceLi
         return messages
     }
 
-    override fun logLtvIncrease(
-        valueIncreased: BigDecimal,
-        valueTotal: BigDecimal,
-        eventName: String,
-        contextInfo: Map<String, String>
-    ): List<ReportingMessage> = emptyList()
-
-    override fun logEvent(event: CommerceEvent): List<ReportingMessage> {
-        if (!KitUtils.isEmpty(event.productAction)) {
-            try {
-                val eventActionAttributes = HashMap<String, String>()
-                CommerceEventUtils.extractActionAttributes(event, eventActionAttributes)
-                var apptentiveCommerceData: CommerceExtendedData? = null
-                val transactionAttributes = event.transactionAttributes
-                if (transactionAttributes != null) {
-
-                    apptentiveCommerceData = setTransactionAttributes(
-                        transactionAttributes,
-                        eventActionAttributes,
-                        event
-                    )
-                }
-                if (apptentiveCommerceData != null) {
-                    engage(
-                        context, String.format("eCommerce - %s", event.productAction),
-                        event.customAttributeStrings,
-                        apptentiveCommerceData
-                    )
-                    val messages = LinkedList<ReportingMessage>()
-                    messages.add(ReportingMessage.fromEvent(this, event))
-                    return messages
-                }
-            } catch (jse: JSONException) {
-            }
-        }
-        return emptyList()
-    }
-
-    private fun setTransactionAttributes(
-        transactionAttributes: TransactionAttributes,
-        eventActionAttributes: HashMap<String, String>,
-        event: CommerceEvent
-    ): CommerceExtendedData {
-        val apptentiveCommerceData = CommerceExtendedData()
-        val transactionId = transactionAttributes.id
-        if (!KitUtils.isEmpty(transactionId)) {
-            apptentiveCommerceData.setId(transactionId)
-        }
-        val transRevenue = transactionAttributes.revenue
-        if (transRevenue != null) {
-            apptentiveCommerceData.setRevenue(transRevenue)
-        }
-        val transShipping = transactionAttributes.shipping
-        if (transShipping != null) {
-            apptentiveCommerceData.setShipping(transShipping)
-        }
-        val transTax = transactionAttributes.tax
-        if (transTax != null) {
-            apptentiveCommerceData.setTax(transTax)
-        }
-        val transAffiliation = transactionAttributes.affiliation
-        if (!KitUtils.isEmpty(transAffiliation)) {
-            apptentiveCommerceData.setAffiliation(transAffiliation)
-        }
-        var transCurrency =
-            eventActionAttributes[CommerceEventUtils.Constants.ATT_ACTION_CURRENCY_CODE]
-        if (KitUtils.isEmpty(transCurrency)) {
-            transCurrency = CommerceEventUtils.Constants.DEFAULT_CURRENCY_CODE
-        }
-        apptentiveCommerceData.setCurrency(transCurrency)
-
-        // Add each item
-        val productList = event.products
-        if (productList != null) {
-            for (product in productList) {
-                val item = CommerceExtendedData.Item()
-                item.setId(product.sku)
-                item.setName(product.name)
-                item.setCategory(product.category)
-                item.setPrice(product.unitPrice)
-                item.setQuantity(product.quantity)
-                item.setCurrency(transCurrency)
-                apptentiveCommerceData.addItem(item)
-            }
-        }
-        return apptentiveCommerceData
-    }
-
-    //region Notifications
-    override fun onReceiveNotification(notification: ApptentiveNotification) {
-        if (notification.hasName(ApptentiveNotifications.NOTIFICATION_CONVERSATION_STATE_DID_CHANGE)) {
-            val conversation = notification.getRequiredUserInfo(
-                ApptentiveNotifications.NOTIFICATION_KEY_CONVERSATION,
-                Conversation::class.java
-            )
-            if (conversation != null && conversation.hasActiveState()) {
-                val currentUser = currentUser
-                if (currentUser == null) {
-                    ApptentiveLog.w(NO_CURRENT_USER_LOG_MESSAGE)
-                    return
-                }
-                val userId = currentUser.id.toString()
-                ApptentiveLog.v("Updating mParticle id: %s", ApptentiveLog.hideIfSanitized(userId))
-                conversation.person.mParticleId = userId
-            }
-        }
-    }
-
-    //endregion
     //region Helpers
     private fun engage(context: Context, event: String, customData: Map<String, String>?) {
-        engage(context, event, customData, *arrayOf())
+        engage(event, customData)
     }
 
     private fun engage(
-        context: Context,
         event: String,
         customData: Map<String, String>?,
-        vararg extendedData: ExtendedData
     ) {
-        Apptentive.engage(context, event, parseCustomData(customData), *extendedData)
+        Apptentive.engage( event, parseCustomData(customData))
     }
 
     /* Apptentive SDK does not provide a function which accepts Object as custom data so we need to cast */
@@ -302,7 +181,7 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, CommerceLi
                     Apptentive.addCustomPersonData(key + SUFFIX_KEY_NUMBER, typedValue)
                 }
                 else -> {
-                    ApptentiveLog.e("Unexpected custom person data type: %s", typedValue?.javaClass)
+                    Log.e("mParticle-CustomData","Unexpected custom person data type:${typedValue?.javaClass}")
                 }
             }
         }
@@ -329,10 +208,7 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, CommerceLi
                             res[key + SUFFIX_KEY_NUMBER] = typedValue
                         }
                         else -> {
-                            ApptentiveLog.e(
-                                "Unexpected custom data type: %s",
-                                typedValue?.javaClass
-                            )
+                            Log.e("mParticle-CustomData","Unexpected custom data type:${typedValue?.javaClass}")
                         }
                     }
                 }

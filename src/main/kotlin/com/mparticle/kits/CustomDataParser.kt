@@ -1,6 +1,6 @@
 package com.mparticle.kits
 
-import com.apptentive.android.sdk.ApptentiveLog
+import android.util.Log
 import kotlin.Any
 import kotlin.Exception
 import kotlin.String
@@ -19,7 +19,7 @@ internal object CustomDataParser {
         return try {
             if (value != null) parseValueGuarded(value) else null
         } catch (e: Exception) {
-            ApptentiveLog.e(e, "Unable to parse value: '%s'", value)
+            Log.e("MParticle-Util", "Unable to parse value: $value")
             value
         }
     }
