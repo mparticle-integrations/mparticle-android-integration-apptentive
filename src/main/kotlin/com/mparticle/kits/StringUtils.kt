@@ -1,7 +1,5 @@
 package com.mparticle.kits
 
-import android.util.Log
-
 internal object StringUtils {
     @JvmStatic
     fun tryParseSettingFlag(
@@ -10,29 +8,21 @@ internal object StringUtils {
         defaultValue: Boolean
     ): Boolean {
         val value = settings[key]
-        if (value != null) {
-            val flag = value.toBoolean()
-            if (flag != null) {
-                return flag
-            }
-            Log.w(
-                "MPartile-Util",
-                "Unable to parse boolean flag $key: $value")
-        }
-        return defaultValue
+        return value?.toBoolean() ?: defaultValue
     }
 
     @JvmStatic
     fun tryParseNumber(value: String): Number? {
         val longValue = tryParseLong(value)
         return if (longValue != null) {
-            if (longValue >= Int.MIN_VALUE && longValue <= Int.MAX_VALUE) {
-                longValue.toInt()
-            } else longValue
+            if (isInIntegerRange(longValue)) longValue.toInt()
+            else longValue
         } else tryParseDouble(value)
     }
 
-    fun tryParseLong(value: String): Long? {
+    private fun isInIntegerRange(value: Long): Boolean = value >= Int.MIN_VALUE && value <= Int.MAX_VALUE
+
+    private fun tryParseLong(value: String): Long? {
         return try {
             value.toLong()
         } catch (e: NumberFormatException) {
@@ -40,17 +30,9 @@ internal object StringUtils {
         }
     }
 
-    fun tryParseDouble(value: String): Double? {
+    private fun tryParseDouble(value: String): Double? {
         return try {
             java.lang.Double.valueOf(value)
-        } catch (e: NumberFormatException) {
-            null
-        }
-    }
-
-    fun tryParseBoolean(value: String): Boolean? {
-        return try {
-            value.toBoolean()
         } catch (e: NumberFormatException) {
             null
         }

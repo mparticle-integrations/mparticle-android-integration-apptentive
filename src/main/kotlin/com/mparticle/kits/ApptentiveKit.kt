@@ -4,24 +4,25 @@ import android.app.Application
 import android.content.Context
 import android.util.Log
 import apptentive.com.android.feedback.Apptentive
-import apptentive.com.android.feedback.ApptentiveActivityInfo
 import apptentive.com.android.feedback.ApptentiveConfiguration
 import apptentive.com.android.feedback.RegisterResult
 import com.mparticle.MPEvent
 import com.mparticle.MParticle
 import com.mparticle.MParticle.IdentityType
-import com.mparticle.kits.KitIntegration.AttributeListener
+import com.mparticle.consent.ConsentState
+import com.mparticle.identity.MParticleUser
+import com.mparticle.kits.KitIntegration.IdentityListener
+import com.mparticle.kits.KitIntegration.UserAttributeListener
 import java.util.*
+import kotlin.collections.HashMap
 
-class ApptentiveKit : KitIntegration(), KitIntegration.EventListener,
-    AttributeListener  {
-    private var enableTypeDetection = false
+class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityListener,
+    UserAttributeListener  {
+    private var enableTypeDetection = true
     private var lastKnownFirstName: String? = null
     private var lastKnownLastName: String? = null
 
-    lateinit var apptentiveActivityInfo: ApptentiveActivityInfo
-
-
+    //region KitIntegration
     override fun getName(): String = NAME
     override fun onKitCreate(
         settings: Map<String, String>,
@@ -40,79 +41,93 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener,
                     Apptentive.setMParticleId(currentUser?.id.toString())
                 }
             }
-
         }
-        Apptentive.registerApptentiveActivityInfoCallback(apptentiveActivityInfo)
         return emptyList()
     }
 
     override fun setOptOut(optedOut: Boolean): List<ReportingMessage> = emptyList()
 
-    override fun setUserIdentity(identityType: IdentityType, id: String) {
-        if (identityType == IdentityType.Email) {
-            Apptentive.setPersonEmail(id)
-        } else if (identityType == IdentityType.CustomerId) {
-            if (KitUtils.isEmpty(Apptentive.getPersonName())) {
-                // Use id as customer name iff no full name is set yet.
-                Apptentive.setPersonName(id)
-            }
-        }
-    }
-
-    override fun setUserAttribute(attributeKey: String, attributeValue: String) {
-        if (attributeKey.equals(MParticle.UserAttributes.FIRSTNAME, true)) {
-            lastKnownFirstName = attributeValue
-        } else if (attributeKey.equals(MParticle.UserAttributes.LASTNAME, true)) {
-            lastKnownLastName = attributeValue
-        } else {
-            addCustomPersonData(attributeKey, attributeValue)
-            return
-        }
-        var fullName = ""
-        if (!KitUtils.isEmpty(lastKnownFirstName)) {
-            fullName += lastKnownFirstName
-        }
-        if (!KitUtils.isEmpty(lastKnownLastName)) {
-            if (fullName.isNotEmpty()) {
-                fullName += ""
-            }
-            fullName += lastKnownLastName
-        }
-        Apptentive.setPersonName(fullName.trim { it <= ' ' })
-    }
-
-    override fun setUserAttributeList(key: String, list: List<String>) {}
     override fun supportsAttributeLists(): Boolean = false
-
-    override fun setAllUserAttributes(
-        attributes: Map<String, String>,
-        attributeLists: Map<String, List<String>>
+    override fun onConsentStateUpdated(
+        oldState: ConsentState?,
+        newState: ConsentState?,
+        user: FilteredMParticleUser?
     ) {
-        var firstName = ""
-        var lastName = ""
-        for ((key, value) in attributes) {
-            if (key.equals(MParticle.UserAttributes.FIRSTNAME, true)) {
-                firstName = value
-            } else if (key.equals(MParticle.UserAttributes.LASTNAME, true)) {
-                lastName = value
-            } else {
-                addCustomPersonData(key, value)
+        //Ignored
+    }
+
+    //endregion
+
+    //region UserAttributeListener
+    override fun onIncrementUserAttribute(
+        key: String?,
+        incrementedBy: Number?,
+        value: String?,
+        user: FilteredMParticleUser?
+    ) {
+       //Ignored
+    }
+
+    override fun onRemoveUserAttribute(key: String?, user: FilteredMParticleUser?) {
+        key?.let {
+            Apptentive.removeCustomPersonData(it)
+        }
+    }
+
+    override fun onSetUserAttribute(key: String?, value: Any?, user: FilteredMParticleUser?) {
+        if (key != null && value != null) {
+            when (key.lowercase()){
+                MParticle.UserAttributes.FIRSTNAME.lowercase() -> {
+                    lastKnownFirstName = value.toString()
+                }
+                MParticle.UserAttributes.LASTNAME.lowercase() -> {
+                    lastKnownLastName = value.toString()
+                }
+                else -> {
+                    Log.d("mParticle", "Adding custom data $key $value")
+                    addCustomPersonData(key, value.toString())
+                    return
+                }
+            }
+            val fullName = listOfNotNull(lastKnownLastName, lastKnownFirstName).joinToString(separator = " ")
+            Log.d("mParticle", "Setting person name $fullName")
+            if (fullName.isNotBlank()) Apptentive.setPersonName(fullName.trim())
+        }
+    }
+
+    override fun onSetUserTag(key: String?, user: FilteredMParticleUser?) {
+       //Ignored
+    }
+
+    override fun onSetUserAttributeList(
+        attributeKey: String?,
+        attributeValueList: MutableList<String>?,
+        user: FilteredMParticleUser?
+    ) {
+        //Ignored
+    }
+
+    override fun onSetAllUserAttributes(
+        userAttributes: MutableMap<String, String>?,
+        userAttributeLists: MutableMap<String, MutableList<String>>?,
+        user: FilteredMParticleUser?
+    ) {
+        userAttributes?.let { userAttribute ->
+            val firstName = userAttribute[MParticle.UserAttributes.FIRSTNAME] ?: ""
+            val lastName = userAttribute[MParticle.UserAttributes.LASTNAME] ?: ""
+            val fullName = listOfNotNull(firstName, lastName).joinToString(separator = " ")
+            if (fullName.isNotBlank()) Apptentive.setPersonName(fullName.trim())
+            userAttribute.filterKeys { key ->
+                key != MParticle.UserAttributes.FIRSTNAME && key != MParticle.UserAttributes.LASTNAME
+            }.map {
+                addCustomPersonData(it.key, it.value)
             }
         }
-        val fullName = if (!KitUtils.isEmpty(firstName) && !KitUtils.isEmpty(lastName)) {
-            "$firstName $lastName"
-        } else {
-            firstName + lastName
-        }
-        Apptentive.setPersonName(fullName.trim { it <= ' ' })
     }
 
-    override fun removeUserAttribute(key: String) {
-        Apptentive.removeCustomPersonData(key)
-    }
+    //endregion
 
-    override fun removeUserIdentity(identityType: IdentityType) {}
-    override fun logout(): List<ReportingMessage> = emptyList()
+    //region EventListener
     override fun leaveBreadcrumb(breadcrumb: String): List<ReportingMessage> = emptyList()
 
     override fun logError(
@@ -149,9 +164,58 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener,
             )
         )
         return messages
+    } //endregion
+
+    //region IdentityListener
+    override fun onIdentifyCompleted(
+        mParticleUser: MParticleUser?,
+        identityApiRequest: FilteredIdentityApiRequest?
+    ) {
+        setUserIdentity(mParticleUser)
     }
 
+    override fun onLoginCompleted(
+        mParticleUser: MParticleUser?,
+        identityApiRequest: FilteredIdentityApiRequest?
+    ) {
+        setUserIdentity(mParticleUser)
+    }
+
+    override fun onLogoutCompleted(
+        mParticleUser: MParticleUser?,
+        identityApiRequest: FilteredIdentityApiRequest?
+    ) {
+        setUserIdentity(mParticleUser)
+    }
+
+    override fun onModifyCompleted(
+        mParticleUser: MParticleUser?,
+        identityApiRequest: FilteredIdentityApiRequest?
+    ) {
+        setUserIdentity(mParticleUser)
+    }
+
+    override fun onUserIdentified(mParticleUser: MParticleUser?) {
+        Apptentive.setMParticleId(mParticleUser?.id.toString())
+    }
+
+    //endregion
+
     //region Helpers
+    private fun setUserIdentity(user: MParticleUser?) {
+        user?.userIdentities?.entries?.forEach {
+            when (it.key) {
+                IdentityType.CustomerId ->  {
+                    if (KitUtils.isEmpty(Apptentive.getPersonName())) {
+                        // Use id as customer name iff no full name is set yet.
+                        Apptentive.setPersonName(it.value)
+                    }
+                }
+                IdentityType.Email -> Apptentive.setPersonEmail(it.value)
+                else -> Log.d("UserIdentity", "Other type")
+            }
+        }
+    }
     private fun engage(context: Context, event: String, customData: Map<String, String>?) {
         engage(event, customData)
     }
