@@ -40,9 +40,7 @@ apply plugin: 'kotlin-android'
 android {
     namespace 'com.mparticle.kits.apptentive'
     defaultConfig {
-        minSdkVersion 16
-        resValue "string", "apptentive_distribution", "mParticle"
-        resValue "string", "apptentive_distribution_version", project.version
+        minSdkVersion 21
     }
 }
 
@@ -56,7 +54,7 @@ publishing {
         mavenJava(MavenPublication) {
             groupId = 'com.mparticle'
             artifactId = 'android-apptentive-kit'
-            version = "6.0.4"
+            version = "6.0.7"
             artifact("$buildDir/outputs/aar/android-apptentive-kit-release.aar")
             artifact androidSourcesJar
         }
@@ -77,6 +75,6 @@ allprojects {
 }
 
 dependencies {
-    implementation 'com.apptentive:apptentive-kit-android:6.0.3-public'
+    implementation 'com.apptentive:apptentive-kit-android:6.0.3-public03'
     testImplementation 'io.mockk:mockk:1.13.3'
 }

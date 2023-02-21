@@ -2,10 +2,13 @@ package com.mparticle.kits
 
 import android.app.Application
 import android.content.Context
+import android.content.pm.PackageManager.NameNotFoundException
 import android.util.Log
 import apptentive.com.android.feedback.Apptentive
 import apptentive.com.android.feedback.ApptentiveConfiguration
 import apptentive.com.android.feedback.RegisterResult
+import apptentive.com.android.util.InternalUseOnly
+import apptentive.com.android.util.LogLevel
 import com.mparticle.MPEvent
 import com.mparticle.MParticle
 import com.mparticle.MParticle.IdentityType
@@ -24,6 +27,7 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
 
     //region KitIntegration
     override fun getName(): String = NAME
+    @OptIn(InternalUseOnly::class)
     override fun onKitCreate(
         settings: Map<String, String>,
         context: Context
@@ -36,6 +40,10 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
 
         if (apptentiveAppKey != null && apptentiveAppSignature != null) {
             val configuration = ApptentiveConfiguration(apptentiveAppKey, apptentiveAppSignature)
+            configuration.logLevel = LogLevel.Verbose
+            configuration.shouldSanitizeLogMessages = false
+            configuration.distributionVersion = getSDKVersion(context)
+            configuration.distributionName = "mParticle"
             Apptentive.register(context.applicationContext as Application, configuration) { registerResult ->
                 if (registerResult is RegisterResult.Success) {
                     Apptentive.setMParticleId(currentUser?.id.toString())
@@ -84,13 +92,11 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
                     lastKnownLastName = value.toString()
                 }
                 else -> {
-                    Log.d("mParticle", "Adding custom data $key $value")
                     addCustomPersonData(key, value.toString())
                     return
                 }
             }
             val fullName = listOfNotNull(lastKnownLastName, lastKnownFirstName).joinToString(separator = " ")
-            Log.d("mParticle", "Setting person name $fullName")
             if (fullName.isNotBlank()) Apptentive.setPersonName(fullName.trim())
         }
     }
@@ -143,7 +149,7 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
     ): List<ReportingMessage> = emptyList()
 
     override fun logEvent(event: MPEvent): List<ReportingMessage> {
-        engage(context, event.eventName, event.customAttributeStrings)
+        engage(event.eventName, event.customAttributeStrings)
         val messageList = LinkedList<ReportingMessage>()
         messageList.add(ReportingMessage.fromEvent(this, event))
         return messageList
@@ -153,7 +159,7 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
         screenName: String,
         eventAttributes: Map<String, String>
     ): List<ReportingMessage> {
-        engage(context, screenName, eventAttributes)
+        engage(screenName, eventAttributes)
         val messages = LinkedList<ReportingMessage>()
         messages.add(
             ReportingMessage(
@@ -216,15 +222,9 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
             }
         }
     }
-    private fun engage(context: Context, event: String, customData: Map<String, String>?) {
-        engage(event, customData)
-    }
 
-    private fun engage(
-        event: String,
-        customData: Map<String, String>?,
-    ) {
-        Apptentive.engage( event, parseCustomData(customData))
+    private fun engage(event: String, customData: Map<String, String>?) {
+        Apptentive.engage(event, parseCustomData(customData))
     }
 
     /* Apptentive SDK does not provide a function which accepts Object as custom data so we need to cast */
@@ -280,7 +280,19 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
             return res
         }
         return null
-    } //endregion
+    }
+
+    private fun getSDKVersion(context: Context): String {
+        val packageManager = context.packageManager
+        return try {
+            val packageInfo = packageManager.getPackageInfo(context.packageName, 0)
+            packageInfo.versionCode.toString()
+        } catch (exception: NameNotFoundException) {
+            Log.e("mParticle", "There is a issue in getting the current SDK version from the PackageManager")
+            "1"
+        }
+    }
+    //endregion
 
     companion object {
         private const val APPTENTIVE_APP_KEY = "apptentiveAppKey"
