@@ -99,7 +99,8 @@ class ApptentiveKitTest {
         kit.onSetUserAttribute(key, value, user)
 
         // then
-        verify { Apptentive.addCustomPersonData("age_number", 30) }
+        // enableTypeDetection is false & 30 will be passed as string
+        verify { Apptentive.addCustomPersonData("age", "30") }
     }
 
     @Test
@@ -151,13 +152,11 @@ class ApptentiveKitTest {
         mockkStatic(Apptentive::class)
         every { Apptentive.addCustomPersonData(any<String>(), any<String>()) } returns Unit
         every { Apptentive.addCustomPersonData(any<String>(), 20) } returns Unit
-
         kit.onSetAllUserAttributes(userAttributes, null, user)
 
         verify {
             Apptentive.addCustomPersonData("key1", "value1")
             Apptentive.addCustomPersonData("key2", "20")
-            Apptentive.addCustomPersonData("key2_number", 20)
         }
     }
 }

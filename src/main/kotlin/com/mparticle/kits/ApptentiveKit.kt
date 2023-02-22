@@ -21,7 +21,7 @@ import kotlin.collections.HashMap
 
 class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityListener,
     UserAttributeListener  {
-    private var enableTypeDetection = true
+    private var enableTypeDetection = false
     private var lastKnownFirstName: String? = null
     private var lastKnownLastName: String? = null
 
