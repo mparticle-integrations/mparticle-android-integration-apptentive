@@ -42,7 +42,7 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
             val configuration = ApptentiveConfiguration(apptentiveAppKey, apptentiveAppSignature)
             configuration.logLevel = LogLevel.Verbose
             configuration.shouldSanitizeLogMessages = false
-            configuration.distributionVersion = getSDKVersion(context)
+            configuration.distributionVersion = com.mparticle.BuildConfig.VERSION_NAME
             configuration.distributionName = "mParticle"
             Apptentive.register(context.applicationContext as Application, configuration) { registerResult ->
                 if (registerResult is RegisterResult.Success) {
@@ -202,7 +202,7 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
     }
 
     override fun onUserIdentified(mParticleUser: MParticleUser?) {
-        Apptentive.setMParticleId(mParticleUser?.id.toString())
+        //Ignored
     }
 
     //endregion
