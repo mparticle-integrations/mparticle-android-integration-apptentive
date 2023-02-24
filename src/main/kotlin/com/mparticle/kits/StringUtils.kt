@@ -32,7 +32,7 @@ internal object StringUtils {
 
     private fun tryParseDouble(value: String): Double? {
         return try {
-            java.lang.Double.valueOf(value)
+            value.toDouble()
         } catch (e: NumberFormatException) {
             null
         }

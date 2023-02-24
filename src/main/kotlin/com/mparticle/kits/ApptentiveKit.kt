@@ -2,13 +2,13 @@ package com.mparticle.kits
 
 import android.app.Application
 import android.content.Context
-import android.content.pm.PackageManager.NameNotFoundException
-import android.util.Log
 import apptentive.com.android.feedback.Apptentive
 import apptentive.com.android.feedback.ApptentiveConfiguration
 import apptentive.com.android.feedback.RegisterResult
 import apptentive.com.android.util.InternalUseOnly
+import apptentive.com.android.util.Log
 import apptentive.com.android.util.LogLevel
+import apptentive.com.android.util.LogTag
 import com.mparticle.MPEvent
 import com.mparticle.MParticle
 import com.mparticle.MParticle.IdentityType
@@ -19,6 +19,7 @@ import com.mparticle.kits.KitIntegration.UserAttributeListener
 import java.util.*
 import kotlin.collections.HashMap
 
+@OptIn(InternalUseOnly::class)
 class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityListener,
     UserAttributeListener  {
     private var enableTypeDetection = false
@@ -27,7 +28,7 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
 
     //region KitIntegration
     override fun getName(): String = NAME
-    @OptIn(InternalUseOnly::class)
+
     override fun onKitCreate(
         settings: Map<String, String>,
         context: Context
@@ -96,8 +97,8 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
                     return
                 }
             }
-            val fullName = listOfNotNull(lastKnownLastName, lastKnownFirstName).joinToString(separator = " ")
-            if (fullName.isNotBlank()) Apptentive.setPersonName(fullName.trim())
+            val fullName = listOfNotNull(lastKnownLastName, lastKnownFirstName).joinToString(separator = " ").trim()
+            if (fullName.isNotBlank()) Apptentive.setPersonName(fullName)
         }
     }
 
@@ -213,12 +214,12 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
             when (it.key) {
                 IdentityType.CustomerId ->  {
                     if (KitUtils.isEmpty(Apptentive.getPersonName())) {
-                        // Use id as customer name iff no full name is set yet.
+                        // Use id as customer name if no full name is set yet.
                         Apptentive.setPersonName(it.value)
                     }
                 }
                 IdentityType.Email -> Apptentive.setPersonEmail(it.value)
-                else -> Log.d("UserIdentity", "Other type")
+                else -> Log.d(LogTag("mParticle"), "Other identity type")
             }
         }
     }
@@ -245,7 +246,7 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
                     Apptentive.addCustomPersonData(key + SUFFIX_KEY_NUMBER, typedValue)
                 }
                 else -> {
-                    Log.e("mParticle-CustomData","Unexpected custom person data type:${typedValue?.javaClass}")
+                    Log.e(LogTag("mParticle"),"Unexpected custom person data type:${typedValue?.javaClass}")
                 }
             }
         }
@@ -272,7 +273,7 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
                             res[key + SUFFIX_KEY_NUMBER] = typedValue
                         }
                         else -> {
-                            Log.e("mParticle-CustomData","Unexpected custom data type:${typedValue?.javaClass}")
+                            Log.e(LogTag("mParticle"),"Unexpected custom data type:${typedValue?.javaClass}")
                         }
                     }
                 }
@@ -280,17 +281,6 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
             return res
         }
         return null
-    }
-
-    private fun getSDKVersion(context: Context): String {
-        val packageManager = context.packageManager
-        return try {
-            val packageInfo = packageManager.getPackageInfo(context.packageName, 0)
-            packageInfo.versionCode.toString()
-        } catch (exception: NameNotFoundException) {
-            Log.e("mParticle", "There is a issue in getting the current SDK version from the PackageManager")
-            "1"
-        }
     }
     //endregion
 
@@ -300,8 +290,6 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
         private const val ENABLE_TYPE_DETECTION = "enableTypeDetection"
         private const val SUFFIX_KEY_FLAG = "_flag"
         private const val SUFFIX_KEY_NUMBER = "_number"
-        private const val NO_CURRENT_USER_LOG_MESSAGE =
-            "Unable to update mParticle id: no current user"
         private const val KEY_REQUIRED =
             "Apptentive App Key is required. If you are migrating from a previous version, you may need to enter the new Apptentive App Key and Signature on the mParticle website."
         private const val SIGNATURE_REQUIRED =
