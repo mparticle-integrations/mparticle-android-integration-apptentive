@@ -22,8 +22,8 @@ import kotlin.collections.HashMap
 
 @OptIn(InternalUseOnly::class)
 class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityListener,
-    UserAttributeListener  {
-    private var enableTypeDetection = false
+    UserAttributeListener {
+    private var enableTypeDetection = true
     private var lastKnownFirstName: String? = null
     private var lastKnownLastName: String? = null
 
@@ -45,7 +45,10 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
             configuration.logLevel = getApptentiveLogLevel()
             configuration.distributionVersion = com.mparticle.BuildConfig.VERSION_NAME
             configuration.distributionName = "mParticle"
-            Apptentive.register(context.applicationContext as Application, configuration) { registerResult ->
+            Apptentive.register(
+                context.applicationContext as Application,
+                configuration
+            ) { registerResult ->
                 if (registerResult is RegisterResult.Success) {
                     Apptentive.setMParticleId(currentUser?.id.toString())
                 }
@@ -74,7 +77,7 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
         value: String?,
         user: FilteredMParticleUser?
     ) {
-       //Ignored
+        //Ignored
     }
 
     override fun onRemoveUserAttribute(key: String?, user: FilteredMParticleUser?) {
@@ -85,7 +88,7 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
 
     override fun onSetUserAttribute(key: String?, value: Any?, user: FilteredMParticleUser?) {
         if (key != null && value != null) {
-            when (key.lowercase()){
+            when (key.lowercase()) {
                 MParticle.UserAttributes.FIRSTNAME.lowercase() -> {
                     lastKnownFirstName = value.toString()
                 }
@@ -97,13 +100,18 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
                     return
                 }
             }
-            val fullName = listOfNotNull(lastKnownFirstName, lastKnownLastName).joinToString(separator = " ").trim()
-            if (fullName.isNotBlank()) Apptentive.setPersonName(fullName)
+            val fullName =
+                listOfNotNull(lastKnownFirstName, lastKnownLastName).joinToString(separator = " ")
+                    .trim()
+            if (fullName.isNotBlank()) {
+                Log.d(LogTag("mParticle"), "Setting user name $fullName")
+                Apptentive.setPersonName(fullName)
+            }
         }
     }
 
     override fun onSetUserTag(key: String?, user: FilteredMParticleUser?) {
-       //Ignored
+        //Ignored
     }
 
     override fun onSetUserAttributeList(
@@ -122,8 +130,11 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
         userAttributes?.let { userAttribute ->
             val firstName = userAttribute[MParticle.UserAttributes.FIRSTNAME] ?: ""
             val lastName = userAttribute[MParticle.UserAttributes.LASTNAME] ?: ""
-            val fullName = listOfNotNull(firstName, lastName).joinToString(separator = " ")
-            if (fullName.isNotBlank()) Apptentive.setPersonName(fullName.trim())
+            val fullName = listOfNotNull(firstName, lastName).joinToString(separator = " ").trim()
+            if (fullName.isNotBlank()) {
+                Log.d(LogTag("mParticle"), "Setting user name $fullName")
+                Apptentive.setPersonName(fullName)
+            }
             userAttribute.filterKeys { key ->
                 key != MParticle.UserAttributes.FIRSTNAME && key != MParticle.UserAttributes.LASTNAME
             }.map {
@@ -224,13 +235,17 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
     private fun setUserIdentity(user: MParticleUser?) {
         user?.userIdentities?.entries?.forEach {
             when (it.key) {
-                IdentityType.CustomerId ->  {
+                IdentityType.CustomerId -> {
                     if (KitUtils.isEmpty(Apptentive.getPersonName())) {
                         // Use id as customer name if no full name is set yet.
+                        Log.d(LogTag("mParticle"), "Setting customer id as user name ${it.value}")
                         Apptentive.setPersonName(it.value)
                     }
                 }
-                IdentityType.Email -> Apptentive.setPersonEmail(it.value)
+                IdentityType.Email -> {
+                    Log.d(LogTag("mParticle"), "Setting customer email ${it.value}")
+                    Apptentive.setPersonEmail(it.value)
+                }
                 else -> Log.d(LogTag("mParticle"), "Other identity type")
             }
         }
@@ -243,6 +258,7 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
     /* Apptentive SDK does not provide a function which accepts Object as custom data so we need to cast */
     private fun addCustomPersonData(key: String, value: String) {
         // original key
+        Log.d(LogTag("mParticle"), "Adding custom person data $key to $value")
         Apptentive.addCustomPersonData(key, value)
 
         // typed key
@@ -258,7 +274,10 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
                     Apptentive.addCustomPersonData(key + SUFFIX_KEY_NUMBER, typedValue)
                 }
                 else -> {
-                    Log.e(LogTag("mParticle"),"Unexpected custom person data type:${typedValue?.javaClass}")
+                    Log.e(
+                        LogTag("mParticle"),
+                        "Unexpected custom person data type:${typedValue?.javaClass}"
+                    )
                 }
             }
         }
@@ -285,7 +304,10 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
                             res[key + SUFFIX_KEY_NUMBER] = typedValue
                         }
                         else -> {
-                            Log.e(LogTag("mParticle"),"Unexpected custom data type:${typedValue?.javaClass}")
+                            Log.e(
+                                LogTag("mParticle"),
+                                "Unexpected custom data type:${typedValue?.javaClass}"
+                            )
                         }
                     }
                 }

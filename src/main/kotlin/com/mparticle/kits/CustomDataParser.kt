@@ -1,10 +1,13 @@
 package com.mparticle.kits
 
-import android.util.Log
+import apptentive.com.android.util.InternalUseOnly
+import apptentive.com.android.util.Log
+import apptentive.com.android.util.LogTag
 import kotlin.Any
 import kotlin.Exception
 import kotlin.String
 
+@OptIn(InternalUseOnly::class)
 internal object CustomDataParser {
     fun parseCustomData(map: Map<String, String?>): Map<String, Any?> {
         val res = HashMap<String, Any?>()
@@ -19,21 +22,19 @@ internal object CustomDataParser {
         return try {
             if (value != null) parseValueGuarded(value) else null
         } catch (e: Exception) {
-            Log.e("MParticle-Util", "Unable to parse value: $value")
+            Log.e(LogTag("pParticle"), "Unable to parse value: $value")
             value
         }
     }
 
     private fun parseValueGuarded(value: String): Any {
         // check for boolean
-        if ("true".equals(value, true) || "false".equals(value,true)) {
+        if ("true".equals(value, true) || "false".equals(value, true)) {
             return value.toBoolean()
         }
 
         // check for number
         val number = StringUtils.tryParseNumber(value)
         return number ?: value
-
-        // default to the original value
     }
 }

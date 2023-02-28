@@ -20,7 +20,8 @@ internal object StringUtils {
         } else tryParseDouble(value)
     }
 
-    private fun isInIntegerRange(value: Long): Boolean = value >= Int.MIN_VALUE && value <= Int.MAX_VALUE
+    private fun isInIntegerRange(value: Long): Boolean =
+        value >= Int.MIN_VALUE && value <= Int.MAX_VALUE
 
     private fun tryParseLong(value: String): Long? {
         return try {
