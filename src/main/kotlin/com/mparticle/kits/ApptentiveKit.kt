@@ -45,6 +45,9 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
             configuration.logLevel = getApptentiveLogLevel()
             configuration.distributionVersion = com.mparticle.BuildConfig.VERSION_NAME
             configuration.distributionName = "mParticle"
+            configuration.shouldSanitizeLogMessages = StringUtils.tryParseSettingFlag(settings, SHOULD_SANITIZE_LOG_MESSAGES, true)
+            configuration.shouldEncryptStorage = StringUtils.tryParseSettingFlag(settings, SHOULD_ENCRYPT_STORAGE, false)
+            configuration.shouldInheritAppTheme = StringUtils.tryParseSettingFlag(settings, SHOULD_INHERIT_APP_THEME, true)
             Apptentive.register(
                 context.applicationContext as Application,
                 configuration
@@ -322,6 +325,11 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
         private const val APPTENTIVE_APP_KEY = "apptentiveAppKey"
         private const val APPTENTIVE_APP_SIGNATURE = "apptentiveAppSignature"
         private const val ENABLE_TYPE_DETECTION = "enableTypeDetection"
+        private const val SHOULD_INHERIT_APP_THEME = "shouldInheritAppTheme"
+        private const val SHOULD_SANITIZE_LOG_MESSAGES = "shouldSanitizeLogMessages"
+        private const val SHOULD_ENCRYPT_STORAGE = "shouldEncryptStorage"
+        private const val RATING_INTERACTION_THROTTLE_LENGTH = "ratingInteractionThrottleLength"
+        private const val CUSTOM_APP_STORE_URL = "customAppStoreURL"
         private const val SUFFIX_KEY_FLAG = "_flag"
         private const val SUFFIX_KEY_NUMBER = "_number"
         private const val KEY_REQUIRED =
