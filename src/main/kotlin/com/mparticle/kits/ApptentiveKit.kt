@@ -14,6 +14,7 @@ import com.mparticle.MParticle
 import com.mparticle.MParticle.IdentityType
 import com.mparticle.consent.ConsentState
 import com.mparticle.identity.MParticleUser
+import com.mparticle.internal.Logger
 import com.mparticle.kits.KitIntegration.IdentityListener
 import com.mparticle.kits.KitIntegration.UserAttributeListener
 import java.util.*
@@ -41,8 +42,7 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
 
         if (apptentiveAppKey != null && apptentiveAppSignature != null) {
             val configuration = ApptentiveConfiguration(apptentiveAppKey, apptentiveAppSignature)
-            configuration.logLevel = LogLevel.Verbose
-            configuration.shouldSanitizeLogMessages = false
+            configuration.logLevel = getApptentiveLogLevel()
             configuration.distributionVersion = com.mparticle.BuildConfig.VERSION_NAME
             configuration.distributionName = "mParticle"
             Apptentive.register(context.applicationContext as Application, configuration) { registerResult ->
@@ -97,7 +97,7 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
                     return
                 }
             }
-            val fullName = listOfNotNull(lastKnownLastName, lastKnownFirstName).joinToString(separator = " ").trim()
+            val fullName = listOfNotNull(lastKnownFirstName, lastKnownLastName).joinToString(separator = " ").trim()
             if (fullName.isNotBlank()) Apptentive.setPersonName(fullName)
         }
     }
@@ -209,6 +209,18 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
     //endregion
 
     //region Helpers
+    private fun getApptentiveLogLevel(): LogLevel {
+        return when (Logger.getMinLogLevel()) {
+            MParticle.LogLevel.DEBUG -> LogLevel.Debug
+            MParticle.LogLevel.INFO -> LogLevel.Info
+            MParticle.LogLevel.ERROR -> LogLevel.Error
+            MParticle.LogLevel.WARNING -> LogLevel.Warning
+            MParticle.LogLevel.VERBOSE -> LogLevel.Verbose
+            MParticle.LogLevel.NONE -> LogLevel.Info
+            null -> LogLevel.Info
+        }
+    }
+
     private fun setUserIdentity(user: MParticleUser?) {
         user?.userIdentities?.entries?.forEach {
             when (it.key) {

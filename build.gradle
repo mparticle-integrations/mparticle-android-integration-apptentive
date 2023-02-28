@@ -44,37 +44,14 @@ android {
     }
 }
 
-task androidSourcesJar(type: Jar) {
-    getArchiveClassifier().set('sources')
-    from android.sourceSets.main.java.srcDirs
-}
-
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            groupId = 'com.mparticle'
-            artifactId = 'android-apptentive-kit'
-            version = "6.0.7"
-            artifact("$buildDir/outputs/aar/android-apptentive-kit-release.aar")
-            artifact androidSourcesJar
-        }
-    }
-    repositories {
-        mavenLocal()
-    }
-}
-
 allprojects {
     repositories {
         google()
         mavenCentral()
-        maven {
-            url "https://apptentive.jfrog.io/artifactory/NewAndroidSDK"
-        }
     }
 }
 
 dependencies {
-    implementation 'com.apptentive:apptentive-kit-android:6.0.3-public03'
+    implementation 'com.apptentive:apptentive-kit-android:6.0.3'
     testImplementation 'io.mockk:mockk:1.13.3'
 }
