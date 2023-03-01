@@ -7,7 +7,6 @@ import apptentive.com.android.feedback.ApptentiveConfiguration
 import apptentive.com.android.feedback.RegisterResult
 import apptentive.com.android.util.InternalUseOnly
 import apptentive.com.android.util.LogLevel
-import apptentive.com.android.util.LogTag
 import com.mparticle.MPEvent
 import com.mparticle.MParticle
 import com.mparticle.MParticle.IdentityType
@@ -45,11 +44,18 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
             configuration.logLevel = getApptentiveLogLevel()
             configuration.distributionVersion = com.mparticle.BuildConfig.VERSION_NAME
             configuration.distributionName = "mParticle"
-            configuration.shouldSanitizeLogMessages = StringUtils.tryParseSettingFlag(settings, SHOULD_SANITIZE_LOG_MESSAGES, true)
-            configuration.shouldEncryptStorage = StringUtils.tryParseSettingFlag(settings, SHOULD_ENCRYPT_STORAGE, false)
-            configuration.shouldInheritAppTheme = StringUtils.tryParseSettingFlag(settings, SHOULD_INHERIT_APP_THEME, true)
+            configuration.shouldSanitizeLogMessages =
+                StringUtils.tryParseSettingFlag(settings, SHOULD_SANITIZE_LOG_MESSAGES, true)
+            configuration.shouldEncryptStorage =
+                StringUtils.tryParseSettingFlag(settings, SHOULD_ENCRYPT_STORAGE, false)
+            configuration.shouldInheritAppTheme =
+                StringUtils.tryParseSettingFlag(settings, SHOULD_INHERIT_APP_THEME, true)
             configuration.customAppStoreURL = settings[CUSTOM_APP_STORE_URL]
-            configuration.ratingInteractionThrottleLength = StringUtils.tryParseLongSettingFlag(settings, RATING_INTERACTION_THROTTLE_LENGTH,  TimeUnit.DAYS.toMillis(7))
+            configuration.ratingInteractionThrottleLength = StringUtils.tryParseLongSettingFlag(
+                settings,
+                RATING_INTERACTION_THROTTLE_LENGTH,
+                TimeUnit.DAYS.toMillis(7)
+            )
             Apptentive.register(
                 context.applicationContext as Application,
                 configuration
@@ -65,6 +71,7 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
     override fun setOptOut(optedOut: Boolean): List<ReportingMessage> = emptyList()
 
     override fun supportsAttributeLists(): Boolean = false
+
     override fun onConsentStateUpdated(
         oldState: ConsentState?,
         newState: ConsentState?,
@@ -109,7 +116,7 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
                 listOfNotNull(lastKnownFirstName, lastKnownLastName).joinToString(separator = " ")
                     .trim()
             if (fullName.isNotBlank()) {
-                Logger.debug( "Setting user name $fullName")
+                Logger.debug("Setting user name $fullName")
                 Apptentive.setPersonName(fullName)
             }
         }
@@ -251,7 +258,7 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
                     Logger.debug("Setting customer email ${it.value}")
                     Apptentive.setPersonEmail(it.value)
                 }
-                else ->  Logger.debug("Other identity type")
+                else -> Logger.debug("Other identity type")
             }
         }
     }

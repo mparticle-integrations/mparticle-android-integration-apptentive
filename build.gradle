@@ -7,9 +7,6 @@ buildscript {
     repositories {
         google()
         mavenCentral()
-        maven {
-            url "https://apptentive.jfrog.io/artifactory/NewAndroidSDK"
-        }
     }
 
     dependencies {
@@ -22,7 +19,6 @@ buildscript {
 plugins {
     id "org.sonarqube" version "3.5.0.2730"
     id "org.jlleitschuh.gradle.ktlint" version "11.1.0"
-    id 'org.gradle.maven-publish'
 }
 
 sonarqube {
