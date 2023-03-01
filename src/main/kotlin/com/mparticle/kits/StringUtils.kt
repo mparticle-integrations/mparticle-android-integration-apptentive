@@ -11,6 +11,19 @@ internal object StringUtils {
         return value?.toBoolean() ?: defaultValue
     }
 
+    fun tryParseLongSettingFlag(
+        settings: Map<String, String>,
+        key: String?,
+        defaultValue: Long
+    ): Long {
+        val value = settings[key]
+        return  try {
+            value?.toLong() ?: defaultValue
+        } catch (e: NumberFormatException) {
+            defaultValue
+        }
+    }
+
     @JvmStatic
     fun tryParseNumber(value: String): Number? {
         val longValue = tryParseLong(value)

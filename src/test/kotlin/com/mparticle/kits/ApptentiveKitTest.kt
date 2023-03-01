@@ -1,7 +1,11 @@
 package com.mparticle.kits
 
 import android.content.Context
+import apptentive.com.android.core.Logger
 import apptentive.com.android.feedback.Apptentive
+import apptentive.com.android.util.InternalUseOnly
+import apptentive.com.android.util.Log
+import apptentive.com.android.util.LogTag
 import com.mparticle.MParticle
 import io.mockk.every
 import io.mockk.mockk
@@ -71,11 +75,13 @@ class ApptentiveKitTest {
         verify { Apptentive.setPersonName("Doe") }
     }
 
+    @OptIn(InternalUseOnly::class)
     @Test
     fun testFirstNameValueOnSetUserAttribute() {
         val user = mockk<FilteredMParticleUser>()
         mockkStatic(Apptentive::class)
         every { Apptentive.setPersonName(any()) } returns Unit
+
         val key = MParticle.UserAttributes.FIRSTNAME
         val value = "John"
 

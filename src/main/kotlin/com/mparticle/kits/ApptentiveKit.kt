@@ -6,7 +6,6 @@ import apptentive.com.android.feedback.Apptentive
 import apptentive.com.android.feedback.ApptentiveConfiguration
 import apptentive.com.android.feedback.RegisterResult
 import apptentive.com.android.util.InternalUseOnly
-import apptentive.com.android.util.Log
 import apptentive.com.android.util.LogLevel
 import apptentive.com.android.util.LogTag
 import com.mparticle.MPEvent
@@ -18,6 +17,7 @@ import com.mparticle.internal.Logger
 import com.mparticle.kits.KitIntegration.IdentityListener
 import com.mparticle.kits.KitIntegration.UserAttributeListener
 import java.util.*
+import java.util.concurrent.TimeUnit
 import kotlin.collections.HashMap
 
 @OptIn(InternalUseOnly::class)
@@ -48,6 +48,8 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
             configuration.shouldSanitizeLogMessages = StringUtils.tryParseSettingFlag(settings, SHOULD_SANITIZE_LOG_MESSAGES, true)
             configuration.shouldEncryptStorage = StringUtils.tryParseSettingFlag(settings, SHOULD_ENCRYPT_STORAGE, false)
             configuration.shouldInheritAppTheme = StringUtils.tryParseSettingFlag(settings, SHOULD_INHERIT_APP_THEME, true)
+            configuration.customAppStoreURL = settings[CUSTOM_APP_STORE_URL]
+            configuration.ratingInteractionThrottleLength = StringUtils.tryParseLongSettingFlag(settings, RATING_INTERACTION_THROTTLE_LENGTH,  TimeUnit.DAYS.toMillis(7))
             Apptentive.register(
                 context.applicationContext as Application,
                 configuration
@@ -107,7 +109,7 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
                 listOfNotNull(lastKnownFirstName, lastKnownLastName).joinToString(separator = " ")
                     .trim()
             if (fullName.isNotBlank()) {
-                Log.d(LogTag("mParticle"), "Setting user name $fullName")
+                Logger.debug( "Setting user name $fullName")
                 Apptentive.setPersonName(fullName)
             }
         }
@@ -135,7 +137,7 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
             val lastName = userAttribute[MParticle.UserAttributes.LASTNAME] ?: ""
             val fullName = listOfNotNull(firstName, lastName).joinToString(separator = " ").trim()
             if (fullName.isNotBlank()) {
-                Log.d(LogTag("mParticle"), "Setting user name $fullName")
+                Logger.debug("Setting user name $fullName")
                 Apptentive.setPersonName(fullName)
             }
             userAttribute.filterKeys { key ->
@@ -241,15 +243,15 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
                 IdentityType.CustomerId -> {
                     if (KitUtils.isEmpty(Apptentive.getPersonName())) {
                         // Use id as customer name if no full name is set yet.
-                        Log.d(LogTag("mParticle"), "Setting customer id as user name ${it.value}")
+                        Logger.debug("Setting customer id as user name ${it.value}")
                         Apptentive.setPersonName(it.value)
                     }
                 }
                 IdentityType.Email -> {
-                    Log.d(LogTag("mParticle"), "Setting customer email ${it.value}")
+                    Logger.debug("Setting customer email ${it.value}")
                     Apptentive.setPersonEmail(it.value)
                 }
-                else -> Log.d(LogTag("mParticle"), "Other identity type")
+                else ->  Logger.debug("Other identity type")
             }
         }
     }
@@ -261,7 +263,7 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
     /* Apptentive SDK does not provide a function which accepts Object as custom data so we need to cast */
     private fun addCustomPersonData(key: String, value: String) {
         // original key
-        Log.d(LogTag("mParticle"), "Adding custom person data $key to $value")
+        Logger.debug("Adding custom person data $key to $value")
         Apptentive.addCustomPersonData(key, value)
 
         // typed key
@@ -277,8 +279,7 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
                     Apptentive.addCustomPersonData(key + SUFFIX_KEY_NUMBER, typedValue)
                 }
                 else -> {
-                    Log.e(
-                        LogTag("mParticle"),
+                    Logger.error(
                         "Unexpected custom person data type:${typedValue?.javaClass}"
                     )
                 }
@@ -307,8 +308,7 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
                             res[key + SUFFIX_KEY_NUMBER] = typedValue
                         }
                         else -> {
-                            Log.e(
-                                LogTag("mParticle"),
+                            Logger.error(
                                 "Unexpected custom data type:${typedValue?.javaClass}"
                             )
                         }
