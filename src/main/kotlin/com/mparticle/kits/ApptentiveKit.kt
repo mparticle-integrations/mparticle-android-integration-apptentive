@@ -234,11 +234,11 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
     //region Helpers
     private fun getApptentiveLogLevel(): LogLevel {
         return when (Logger.getMinLogLevel()) {
+            MParticle.LogLevel.VERBOSE -> LogLevel.Verbose
             MParticle.LogLevel.DEBUG -> LogLevel.Debug
             MParticle.LogLevel.INFO -> LogLevel.Info
-            MParticle.LogLevel.ERROR -> LogLevel.Error
             MParticle.LogLevel.WARNING -> LogLevel.Warning
-            MParticle.LogLevel.VERBOSE -> LogLevel.Verbose
+            MParticle.LogLevel.ERROR -> LogLevel.Error
             MParticle.LogLevel.NONE -> LogLevel.Info
             null -> LogLevel.Info
         }
