@@ -6,7 +6,6 @@ buildscript {
 
     repositories {
         google()
-        mavenLocal()
         mavenCentral()
     }
 
@@ -37,12 +36,18 @@ apply plugin: 'kotlin-android'
 android {
     namespace 'com.mparticle.kits.apptentive'
     defaultConfig {
-        minSdkVersion 16
-        resValue "string", "apptentive_distribution", "mParticle"
-        resValue "string", "apptentive_distribution_version", project.version
+        minSdkVersion 21
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
     }
 }
 
 dependencies {
-    api 'com.apptentive:apptentive-android:5.8.4'
+    implementation 'com.apptentive:apptentive-kit-android:6.0.3'
+    testImplementation 'io.mockk:mockk:1.13.3'
 }
