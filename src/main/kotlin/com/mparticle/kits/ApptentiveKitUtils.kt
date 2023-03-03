@@ -10,6 +10,7 @@ import com.mparticle.MParticle
 
 
 object ApptentiveKitUtils {
+    @JvmStatic
     fun registerApptentiveActivityContext(callback: ApptentiveActivityInfo) {
         if (MParticle.getInstance()?.isKitActive(MParticle.ServiceProviders.APPTENTIVE) == true) {
             Apptentive.registerApptentiveActivityInfoCallback(callback)
