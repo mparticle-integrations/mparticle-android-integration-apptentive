@@ -1,8 +1,5 @@
 package com.mparticle.kits
 
-import com.apptentive.android.sdk.ApptentiveLog
-import com.apptentive.android.sdk.ApptentiveLogTag
-
 internal object StringUtils {
     @JvmStatic
     fun tryParseSettingFlag(
@@ -11,32 +8,37 @@ internal object StringUtils {
         defaultValue: Boolean
     ): Boolean {
         val value = settings[key]
-        if (value != null) {
-            val flag = value.toBoolean()
-            if (flag != null) {
-                return flag
-            }
-            ApptentiveLog.w(
-                ApptentiveLogTag.UTIL,
-                "Unable to parse boolean flag '%s': %s",
-                key,
-                value
-            )
+        return value?.toBoolean() ?: defaultValue
+    }
+
+    fun tryParseLongSettingFlag(
+        settings: Map<String, String>,
+        key: String?,
+        defaultValue: Long
+    ): Long {
+        val value = key?.let {
+            settings[key]
         }
-        return defaultValue
+        return  try {
+            value?.toLong() ?: defaultValue
+        } catch (e: NumberFormatException) {
+            defaultValue
+        }
     }
 
     @JvmStatic
     fun tryParseNumber(value: String): Number? {
         val longValue = tryParseLong(value)
         return if (longValue != null) {
-            if (longValue >= Int.MIN_VALUE && longValue <= Int.MAX_VALUE) {
-                longValue.toInt()
-            } else longValue
+            if (isInIntegerRange(longValue)) longValue.toInt()
+            else longValue
         } else tryParseDouble(value)
     }
 
-    fun tryParseLong(value: String): Long? {
+    private fun isInIntegerRange(value: Long): Boolean =
+        value >= Int.MIN_VALUE && value <= Int.MAX_VALUE
+
+    private fun tryParseLong(value: String): Long? {
         return try {
             value.toLong()
         } catch (e: NumberFormatException) {
@@ -44,17 +46,9 @@ internal object StringUtils {
         }
     }
 
-    fun tryParseDouble(value: String): Double? {
+    private fun tryParseDouble(value: String): Double? {
         return try {
-            java.lang.Double.valueOf(value)
-        } catch (e: NumberFormatException) {
-            null
-        }
-    }
-
-    fun tryParseBoolean(value: String): Boolean? {
-        return try {
-            value.toBoolean()
+            value.toDouble()
         } catch (e: NumberFormatException) {
             null
         }
