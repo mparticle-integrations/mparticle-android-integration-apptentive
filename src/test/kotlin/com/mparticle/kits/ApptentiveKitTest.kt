@@ -7,6 +7,7 @@ import apptentive.com.android.util.InternalUseOnly
 import apptentive.com.android.util.Log
 import apptentive.com.android.util.LogTag
 import com.mparticle.MParticle
+import com.mparticle.MParticleOptions
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
@@ -49,11 +50,12 @@ class ApptentiveKitTest {
     @Test
     @Throws(Exception::class)
     fun testClassName() {
-        val factory = KitIntegrationFactory()
-        val integrations = factory.knownIntegrations
+        val options = Mockito.mock(MParticleOptions::class.java)
+        val factory = KitIntegrationFactory(options)
+        val integrations = factory.supportedKits.values
         val className = kit.javaClass.name
         for (integration in integrations) {
-            if (integration.value == className) {
+            if (integration.name == className) {
                 return
             }
         }
