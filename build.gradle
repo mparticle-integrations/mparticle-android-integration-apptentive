@@ -6,7 +6,6 @@ buildscript {
 
     repositories {
         google()
-        mavenLocal()
         mavenCentral()
     }
 
@@ -49,6 +48,6 @@ allprojects {
 }
 
 dependencies {
-    api 'com.apptentive:apptentive-kit-android:6.0.3'
+    api 'com.apptentive:apptentive-kit-android:6.1.0'
     testImplementation 'io.mockk:mockk:1.13.3'
 }

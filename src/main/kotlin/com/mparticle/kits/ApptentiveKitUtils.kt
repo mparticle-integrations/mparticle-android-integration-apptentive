@@ -17,7 +17,7 @@ object ApptentiveKitUtils {
         } else {
             val filter =
                 IntentFilter(MParticle.ServiceProviders.BROADCAST_ACTIVE + MParticle.ServiceProviders.APPTENTIVE);
-            callback.getApptentiveActivityInfo().registerReceiver(object : BroadcastReceiver() {
+            callback.getApptentiveActivityInfo()?.registerReceiver(object : BroadcastReceiver() {
                 override fun onReceive(context: Context, intent: Intent) {
                     if (intent.action?.startsWith(MParticle.ServiceProviders.BROADCAST_ACTIVE) == true) {
                         Apptentive.registerApptentiveActivityInfoCallback(callback)
