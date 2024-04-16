@@ -245,20 +245,23 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
     }
 
     private fun setUserIdentity(user: MParticleUser?) {
-        user?.userIdentities?.entries?.forEach {
-            when (it.key) {
-                IdentityType.CustomerId -> {
-                    if (KitUtils.isEmpty(Apptentive.getPersonName())) {
-                        // Use id as customer name if no full name is set yet.
-                        Logger.debug("Setting customer id as user name ${it.value}")
-                        Apptentive.setPersonName(it.value)
+        user?.userIdentities?.entries?.let {
+            for(i in it.indices){
+                val entry = it.elementAt(i)
+                when (entry.key) {
+                    IdentityType.CustomerId -> {
+                        if (KitUtils.isEmpty(Apptentive.getPersonName())) {
+                            // Use id as customer name if no full name is set yet.
+                            Logger.debug("Setting customer id as user name ${entry.value}")
+                            Apptentive.setPersonName(entry.value)
+                        }
                     }
+                    IdentityType.Email -> {
+                        Logger.debug("Setting customer email ${entry.value}")
+                        Apptentive.setPersonEmail(entry.value)
+                    }
+                    else -> Logger.debug("Other identity type")
                 }
-                IdentityType.Email -> {
-                    Logger.debug("Setting customer email ${it.value}")
-                    Apptentive.setPersonEmail(it.value)
-                }
-                else -> Logger.debug("Other identity type")
             }
         }
     }
