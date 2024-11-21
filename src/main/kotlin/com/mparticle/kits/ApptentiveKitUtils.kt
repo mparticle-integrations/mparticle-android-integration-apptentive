@@ -28,15 +28,15 @@ object ApptentiveKitUtils {
             Log.d("ApptentiveKitUtils", "registerApptentiveActivityContext: kit is active")
         } else {
             val filter = IntentFilter(MParticle.ServiceProviders.BROADCAST_ACTIVE + MParticle.ServiceProviders.APPTENTIVE)
-                if (Build.VERSION.SDK_INT > Build.VERSION_CODES.TIRAMISU) {
-                    callback.getApptentiveActivityInfo()
-                        ?.registerReceiver(broadcastReceiver, filter, RECEIVER_EXPORTED)
-                    Log.d("ApptentiveKitUtils", "registerApptentiveActivityContext: kit is active SDK 33+")
-                } else {
-                    callback.getApptentiveActivityInfo()
-                        ?.registerReceiver(broadcastReceiver, filter)
-                    Log.d("ApptentiveKitUtils", "registerApptentiveActivityContext: kit is active SDK < 33")
-                }
+            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.TIRAMISU) {
+                callback.getApptentiveActivityInfo()
+                    ?.registerReceiver(broadcastReceiver, filter, RECEIVER_EXPORTED)
+                Log.d("ApptentiveKitUtils", "registerApptentiveActivityContext: kit is active SDK 33+")
+            } else {
+                callback.getApptentiveActivityInfo()
+                    ?.registerReceiver(broadcastReceiver, filter)
+                Log.d("ApptentiveKitUtils", "registerApptentiveActivityContext: kit is active SDK < 33")
+            }
         }
     }
 }
