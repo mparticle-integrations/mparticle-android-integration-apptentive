@@ -18,14 +18,13 @@ internal object CustomDataParser {
     }
 
     @JvmStatic
-    fun parseValue(value: String?): Any? {
-        return try {
+    fun parseValue(value: String?): Any? =
+        try {
             if (value != null) parseValueGuarded(value) else null
         } catch (e: Exception) {
             Log.e(LogTag("pParticle"), "Unable to parse value: $value")
             value
         }
-    }
 
     private fun parseValueGuarded(value: String): Any {
         // check for boolean
