@@ -1,18 +1,14 @@
 package com.mparticle.kits
 
 import android.content.Context
-import apptentive.com.android.core.Logger
 import apptentive.com.android.feedback.Apptentive
 import apptentive.com.android.util.InternalUseOnly
-import apptentive.com.android.util.Log
-import apptentive.com.android.util.LogTag
 import com.mparticle.MParticle
 import com.mparticle.MParticleOptions
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.verify
-import junit.framework.TestCase.*
 import org.junit.Assert
 import org.junit.Test
 import org.mockito.Mockito
@@ -133,10 +129,11 @@ class ApptentiveKitTest {
 
     @Test
     fun testFullNameInTheUserAttributes() {
-        val userAttributes = mutableMapOf(
-            MParticle.UserAttributes.FIRSTNAME to "John",
-            MParticle.UserAttributes.LASTNAME to "Doe"
-        )
+        val userAttributes =
+            mutableMapOf(
+                MParticle.UserAttributes.FIRSTNAME to "John",
+                MParticle.UserAttributes.LASTNAME to "Doe",
+            )
 
         val user = mockk<FilteredMParticleUser>()
         mockkStatic(Apptentive::class)
@@ -152,10 +149,11 @@ class ApptentiveKitTest {
 
     @Test
     fun testListOfCustomPersonData() {
-        val userAttributes = mutableMapOf(
-            "key1" to "value1",
-            "key2" to "20"
-        )
+        val userAttributes =
+            mutableMapOf(
+                "key1" to "value1",
+                "key2" to "20",
+            )
         val user = mockk<FilteredMParticleUser>()
         mockkStatic(Apptentive::class)
         every { Apptentive.addCustomPersonData(any<String>(), any<String>()) } returns Unit

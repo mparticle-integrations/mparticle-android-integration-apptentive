@@ -15,12 +15,15 @@ import com.mparticle.identity.MParticleUser
 import com.mparticle.internal.Logger
 import com.mparticle.kits.KitIntegration.IdentityListener
 import com.mparticle.kits.KitIntegration.UserAttributeListener
-import java.util.*
+import java.util.LinkedList
 import java.util.concurrent.TimeUnit
 import kotlin.collections.HashMap
 
 @OptIn(InternalUseOnly::class)
-class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityListener,
+class ApptentiveKit :
+    KitIntegration(),
+    KitIntegration.EventListener,
+    IdentityListener,
     UserAttributeListener {
     private var enableTypeDetection = true
     private var lastKnownFirstName: String? = null
@@ -31,7 +34,7 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
 
     override fun onKitCreate(
         settings: Map<String, String>,
-        context: Context
+        context: Context,
     ): List<ReportingMessage> {
         val apptentiveAppKey = settings[APPTENTIVE_APP_KEY]
         val apptentiveAppSignature = settings[APPTENTIVE_APP_SIGNATURE]
@@ -51,14 +54,15 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
             configuration.shouldInheritAppTheme =
                 StringUtils.tryParseSettingFlag(settings, SHOULD_INHERIT_APP_THEME, true)
             configuration.customAppStoreURL = settings[CUSTOM_APP_STORE_URL]
-            configuration.ratingInteractionThrottleLength = StringUtils.tryParseLongSettingFlag(
-                settings,
-                RATING_INTERACTION_THROTTLE_LENGTH,
-                TimeUnit.DAYS.toMillis(7)
-            )
+            configuration.ratingInteractionThrottleLength =
+                StringUtils.tryParseLongSettingFlag(
+                    settings,
+                    RATING_INTERACTION_THROTTLE_LENGTH,
+                    TimeUnit.DAYS.toMillis(7),
+                )
             Apptentive.register(
                 context.applicationContext as Application,
-                configuration
+                configuration,
             ) { registerResult ->
                 if (registerResult is RegisterResult.Success) {
                     Apptentive.setMParticleId(currentUser?.id.toString())
@@ -75,9 +79,9 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
     override fun onConsentStateUpdated(
         oldState: ConsentState?,
         newState: ConsentState?,
-        user: FilteredMParticleUser?
+        user: FilteredMParticleUser?,
     ) {
-        //Ignored
+        // Ignored
     }
 
     //endregion
@@ -87,18 +91,25 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
         key: String?,
         incrementedBy: Number?,
         value: String?,
-        user: FilteredMParticleUser?
+        user: FilteredMParticleUser?,
     ) {
-        //Ignored
+        // Ignored
     }
 
-    override fun onRemoveUserAttribute(key: String?, user: FilteredMParticleUser?) {
+    override fun onRemoveUserAttribute(
+        key: String?,
+        user: FilteredMParticleUser?,
+    ) {
         key?.let {
             Apptentive.removeCustomPersonData(it)
         }
     }
 
-    override fun onSetUserAttribute(key: String?, value: Any?, user: FilteredMParticleUser?) {
+    override fun onSetUserAttribute(
+        key: String?,
+        value: Any?,
+        user: FilteredMParticleUser?,
+    ) {
         if (key != null && value != null) {
             when (key.lowercase()) {
                 MParticle.UserAttributes.FIRSTNAME.lowercase() -> {
@@ -113,7 +124,8 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
                 }
             }
             val fullName =
-                listOfNotNull(lastKnownFirstName, lastKnownLastName).joinToString(separator = " ")
+                listOfNotNull(lastKnownFirstName, lastKnownLastName)
+                    .joinToString(separator = " ")
                     .trim()
             if (fullName.isNotBlank()) {
                 Logger.debug("Setting user name $fullName")
@@ -122,36 +134,43 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
         }
     }
 
-    override fun onSetUserTag(key: String?, user: FilteredMParticleUser?) {
-        //Ignored
+    override fun onSetUserTag(
+        key: String?,
+        user: FilteredMParticleUser?,
+    ) {
+        // Ignored
     }
 
     override fun onSetUserAttributeList(
         attributeKey: String?,
         attributeValueList: MutableList<String>?,
-        user: FilteredMParticleUser?
+        user: FilteredMParticleUser?,
     ) {
-        //Ignored
+        // Ignored
     }
 
     override fun onSetAllUserAttributes(
         userAttributes: MutableMap<String, String>?,
         userAttributeLists: MutableMap<String, MutableList<String>>?,
-        user: FilteredMParticleUser?
+        user: FilteredMParticleUser?,
     ) {
         userAttributes?.let { userAttribute ->
             val firstName = userAttribute[MParticle.UserAttributes.FIRSTNAME] ?: ""
             val lastName = userAttribute[MParticle.UserAttributes.LASTNAME] ?: ""
-            val fullName = listOfNotNull(firstName, lastName).joinToString(separator = " ").trim()
+            val fullName =
+                listOfNotNull(firstName, lastName)
+                    .joinToString(separator = " ")
+                    .trim()
             if (fullName.isNotBlank()) {
                 Logger.debug("Setting user name $fullName")
                 Apptentive.setPersonName(fullName)
             }
-            userAttribute.filterKeys { key ->
-                key != MParticle.UserAttributes.FIRSTNAME && key != MParticle.UserAttributes.LASTNAME
-            }.map {
-                addCustomPersonData(it.key, it.value)
-            }
+            userAttribute
+                .filterKeys { key ->
+                    key != MParticle.UserAttributes.FIRSTNAME && key != MParticle.UserAttributes.LASTNAME
+                }.map {
+                    addCustomPersonData(it.key, it.value)
+                }
         }
     }
 
@@ -162,14 +181,13 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
 
     override fun logError(
         message: String,
-        errorAttributes: Map<String, String>
+        errorAttributes: Map<String, String>,
     ): List<ReportingMessage> = emptyList()
-
 
     override fun logException(
         exception: Exception,
         exceptionAttributes: Map<String, String>,
-        message: String
+        message: String,
     ): List<ReportingMessage> = emptyList()
 
     override fun logEvent(event: MPEvent): List<ReportingMessage> {
@@ -181,7 +199,7 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
 
     override fun logScreen(
         screenName: String,
-        eventAttributes: Map<String, String>
+        eventAttributes: Map<String, String>,
     ): List<ReportingMessage> {
         engage(screenName, eventAttributes)
         val messages = LinkedList<ReportingMessage>()
@@ -190,8 +208,8 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
                 this,
                 ReportingMessage.MessageType.SCREEN_VIEW,
                 System.currentTimeMillis(),
-                eventAttributes
-            )
+                eventAttributes,
+            ),
         )
         return messages
     } //endregion
@@ -199,41 +217,41 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
     //region IdentityListener
     override fun onIdentifyCompleted(
         mParticleUser: MParticleUser?,
-        identityApiRequest: FilteredIdentityApiRequest?
+        identityApiRequest: FilteredIdentityApiRequest?,
     ) {
         setUserIdentity(mParticleUser)
     }
 
     override fun onLoginCompleted(
         mParticleUser: MParticleUser?,
-        identityApiRequest: FilteredIdentityApiRequest?
+        identityApiRequest: FilteredIdentityApiRequest?,
     ) {
         setUserIdentity(mParticleUser)
     }
 
     override fun onLogoutCompleted(
         mParticleUser: MParticleUser?,
-        identityApiRequest: FilteredIdentityApiRequest?
+        identityApiRequest: FilteredIdentityApiRequest?,
     ) {
         setUserIdentity(mParticleUser)
     }
 
     override fun onModifyCompleted(
         mParticleUser: MParticleUser?,
-        identityApiRequest: FilteredIdentityApiRequest?
+        identityApiRequest: FilteredIdentityApiRequest?,
     ) {
         setUserIdentity(mParticleUser)
     }
 
     override fun onUserIdentified(mParticleUser: MParticleUser?) {
-        //Ignored
+        // Ignored
     }
 
     //endregion
 
     //region Helpers
-    private fun getApptentiveLogLevel(): LogLevel {
-        return when (Logger.getMinLogLevel()) {
+    private fun getApptentiveLogLevel(): LogLevel =
+        when (Logger.getMinLogLevel()) {
             MParticle.LogLevel.VERBOSE -> LogLevel.Verbose
             MParticle.LogLevel.DEBUG -> LogLevel.Debug
             MParticle.LogLevel.INFO -> LogLevel.Info
@@ -242,11 +260,10 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
             MParticle.LogLevel.NONE -> LogLevel.Info
             null -> LogLevel.Info
         }
-    }
 
     private fun setUserIdentity(user: MParticleUser?) {
         user?.userIdentities?.entries?.let {
-            for(i in it.indices){
+            for (i in it.indices) {
                 val entry = it.elementAt(i)
                 when (entry.key) {
                     IdentityType.CustomerId -> {
@@ -266,12 +283,18 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
         }
     }
 
-    private fun engage(event: String, customData: Map<String, String>?) {
+    private fun engage(
+        event: String,
+        customData: Map<String, String>?,
+    ) {
         Apptentive.engage(event, parseCustomData(customData))
     }
 
-    /* Apptentive SDK does not provide a function which accepts Object as custom data so we need to cast */
-    private fun addCustomPersonData(key: String, value: String) {
+    // Apptentive SDK does not provide a function which accepts Object as custom data so we need to cast
+    private fun addCustomPersonData(
+        key: String,
+        value: String,
+    ) {
         // original key
         Logger.debug("Adding custom person data $key to $value")
         Apptentive.addCustomPersonData(key, value)
@@ -290,7 +313,7 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
                 }
                 else -> {
                     Logger.error(
-                        "Unexpected custom person data type:${typedValue?.javaClass}"
+                        "Unexpected custom person data type:${typedValue?.javaClass}",
                     )
                 }
             }
@@ -301,7 +324,6 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
         if (map != null) {
             val res: MutableMap<String, Any> = HashMap()
             for ((key, value) in map) {
-
                 // original key
                 res[key] = value
 
@@ -319,7 +341,7 @@ class ApptentiveKit : KitIntegration(), KitIntegration.EventListener, IdentityLi
                         }
                         else -> {
                             Logger.error(
-                                "Unexpected custom data type:${typedValue?.javaClass}"
+                                "Unexpected custom data type:${typedValue?.javaClass}",
                             )
                         }
                     }
